@@ -3,8 +3,14 @@
 An AI-powered macOS Mail extension that generates email replies directly inside the Mail compose toolbar. No copy-pasting between apps -- just click, generate, and insert.
 
 <p align="center">
-  <img src="MailMateAI/MailMateAI/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" width="128" alt="MailMate AI Icon">
+  <img src="assets/icon.png" width="128" alt="MailMate AI Icon">
 </p>
+
+## Screenshots
+
+| Host App -- Manage Saved Prompts | Mail Extension -- Compose Toolbar Panel |
+|---|---|
+| ![App Overview](assets/app-overview.png) | ![Extension Panel](assets/extension-panel.png) |
 
 ## Features
 
@@ -21,30 +27,62 @@ An AI-powered macOS Mail extension that generates email replies directly inside 
 
 - macOS 14.0 (Sonoma) or later
 - A [Google Gemini API key](https://aistudio.google.com/app/apikey) (free tier available)
-- Xcode 16+ (to build from source)
 
-## Install from DMG
+## Installation
 
-1. Download `MailMateAI.dmg` from [Releases](../../releases)
-2. Open the DMG and drag **MailMate AI** to **Applications**
-3. Launch MailMate AI and follow the onboarding:
-   - Enter your Gemini API key
-   - Enable the Mail extension in System Settings > General > Login Items & Extensions
-   - Grant Accessibility permission (optional, for auto-paste)
-4. Open Mail, compose a new email, and click the MailMate AI icon in the toolbar
+### 1. Download and install
+
+Download `MailMateAI.dmg` from the [latest release](../../releases/latest), open it, and drag **MailMate AI** into your **Applications** folder.
+
+### 2. Launch and enter your API key
+
+Open MailMate AI from Applications. The onboarding wizard will ask you to paste your **Gemini API key**. You can get a free key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+
+### 3. Enable the Mail extension
+
+The extension needs to be enabled in two places:
+
+**System Settings:**
+1. Open **System Settings** > **General** > **Login Items & Extensions**
+2. Find **MailMate AI** and click the **(i)** info button
+3. Toggle on the **Mail Extensions** checkbox
+
+**Mail.app (if needed):**
+1. Open **Mail** > **Settings** > **Extensions**
+2. Enable **MailMate AI Extension**
+
+### 4. Grant Accessibility permission (optional)
+
+For **auto-paste** (so you don't have to press Cmd+V manually):
+1. Open **System Settings** > **Privacy & Security** > **Accessibility**
+2. Add **MailMate AI** to the list
+
+This step is optional -- without it, the generated reply is copied to your clipboard and you paste it manually with Cmd+V.
+
+## How It Works
+
+1. **Compose an email** in Mail -- either a new message or a reply
+2. **Click the MailMate AI icon** in the compose toolbar (the MM icon)
+3. **Type an instruction** ("Reply professionally and mention the Thursday deadline") or **click a saved prompt**
+4. **Watch the live preview** as the AI generates your reply using the email context
+5. **Refine if needed** -- type "make it shorter" or "add a note about the budget" and click Refine
+6. **Click Insert into Email** -- the formatted reply is pasted directly into the compose body
+
+The extension reads the original email content (subject, sender, body) and feeds it to the Gemini API along with your instruction. The generated reply includes proper HTML formatting, hyperlinks, and your signature.
 
 ## Build from Source
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/marctuinier/mac-mail-llm.git
 cd mac-mail-llm/MailMateAI
 open MailMateAI.xcodeproj
 ```
 
 In Xcode:
-1. Set your Development Team under Signing & Capabilities for both the **MailMateAI** and **MailExtension** targets
+1. Set your **Development Team** under Signing & Capabilities for both the **MailMateAI** and **MailExtension** targets
 2. Build and run (Cmd+R)
-3. The app installs and registers the extension automatically
+
+Requires Xcode 16+.
 
 ## Project Structure
 
@@ -55,18 +93,7 @@ MailMateAI/
 └── Shared/              # Shared code -- App Group constants, email context model
 ```
 
-See [PLAN.md](PLAN.md) for detailed architecture, development log, and learnings.
-
-## How It Works
-
-The Mail extension uses Apple's MailKit framework (`MEComposeSessionHandler`) to add a toolbar button to Mail's compose window. When clicked, a dropdown panel appears with:
-
-1. A text field for custom instructions
-2. Saved prompt templates (configured in the host app)
-3. A live preview area showing the AI-generated reply
-4. Refine and Insert buttons
-
-The extension calls the Gemini API directly (via `ExtensionGeminiClient`) with SSE streaming. Generation state is managed by a singleton (`GenerationManager`) that persists across panel open/close cycles. The host app and extension share data through an App Group container and Keychain.
+See [PLAN.md](PLAN.md) for detailed architecture, development log, and technical learnings.
 
 ## License
 
