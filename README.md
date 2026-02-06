@@ -73,13 +73,23 @@ The extension reads the original email content (subject, sender, body) and feeds
 ## Build from Source
 
 ```bash
-git clone https://github.com/marctuinier/mac-mail-llm.git
+git clone https://github.com/<owner>/mac-mail-llm.git
 cd mac-mail-llm/MailMateAI
 open MailMateAI.xcodeproj
 ```
 
-In Xcode:
-1. Set your **Development Team** under Signing & Capabilities for both the **MailMateAI** and **MailExtension** targets
+Replace `<owner>` with the repository owner (e.g. your GitHub username or the fork you use).
+
+Before building:
+1. **Replace `YOUR_TEAM_ID`** with your [Apple Developer Team ID](https://developer.apple.com/account#MembershipDetailsCard) in:
+   - `MailMateAI/Shared/AppGroupConstants.swift` (line 8)
+   - `MailMateAI/MailMateAI/MailMateAI.entitlements`
+   - `MailMateAI/MailExtension/MailExtension.entitlements`
+   - In Xcode: **Signing & Capabilities** for both targets (or set `DEVELOPMENT_TEAM` in the project)
+2. In the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list/applicationGroup), create an **App Group** with identifier `YOUR_TEAM_ID.group.com.mailmate.ai` (using the same Team ID).
+
+Then in Xcode:
+1. Set your **Development Team** under Signing & Capabilities for both the **MailMateAI** and **MailExtension** targets (if not already set)
 2. Build and run (Cmd+R)
 
 Requires Xcode 16+.

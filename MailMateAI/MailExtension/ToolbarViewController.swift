@@ -4,7 +4,7 @@ import Security
 
 #if DEBUG
 private func tvLog(_ hId: String, _ loc: String, _ msg: String, _ data: [String: Any] = [:]) {
-    guard let c = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "UD763H597N.group.com.mailmate.ai") else { return }
+    guard let c = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroupConstants.appGroupID) else { return }
     let p = c.appendingPathComponent("debug.log").path
     let e: [String: Any] = ["sessionId":"debug-session","runId":"run2","hypothesisId":hId,"location":loc,"message":msg,"data":data,"timestamp":Int(Date().timeIntervalSince1970*1000)]
     if let d = try? JSONSerialization.data(withJSONObject: e), let s = String(data: d, encoding: .utf8) {

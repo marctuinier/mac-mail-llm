@@ -4,7 +4,8 @@ import Foundation
 /// via the App Group container.
 enum AppGroupConstants {
     /// The App Group identifier shared between the host app and extension.
-    static let appGroupID = "UD763H597N.group.com.mailmate.ai"
+    /// Replace YOUR_TEAM_ID with your Apple Developer Team ID and create this App Group in the developer portal.
+    static let appGroupID = "YOUR_TEAM_ID.group.com.mailmate.ai"
 
     /// The URL scheme used by the extension to open the host app.
     static let urlScheme = "mailmate-ai"

@@ -255,7 +255,7 @@ struct PromptEditorSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Signature Override (optional)")
                             .font(.subheadline.weight(.medium))
-                        TextField("e.g., Best regards,\\nMarc", text: Binding(
+                        TextField("e.g., Best regards,\\nYour Name", text: Binding(
                             get: { prompt.signature ?? "" },
                             set: { prompt.signature = $0.isEmpty ? nil : $0 }
                         ))

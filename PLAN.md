@@ -54,7 +54,7 @@ MailMateAI.app (host)
 ### Key Technologies
 
 - **MailKit (MEComposeSessionHandler, MEExtensionViewController)** — Apple's Mail extension framework
-- **App Group container** (`UD763H597N.group.com.mailmate.ai`) — shared file storage between app and extension
+- **App Group container** (`YOUR_TEAM_ID.group.com.mailmate.ai`) — shared file storage between app and extension (replace `YOUR_TEAM_ID` with your Apple Developer Team ID)
 - **Keychain Services** — secure API key storage (shared via keychain-access-groups entitlement)
 - **NSPasteboard** — rich text (HTML + RTF + plain text) clipboard for inserting replies
 - **Gemini API** (google generativelanguage REST) — AI generation with SSE streaming
@@ -120,7 +120,7 @@ MailMateAI/
 1. **project.pbxproj corruption** — `remoteGlobalIDString` pointed to the product reference instead of the native target, causing internal Xcode build errors.
 2. **Method signature renames** — MailKit renamed `handlerForComposeSession` → `handler(for:)` and `viewControllerForSession` → `viewController(for:)` between OS versions.
 3. **Code signing** — Ad-hoc signing doesn't work for Mail extensions. Requires a proper Apple Developer Team ID.
-4. **Team ID mismatch** — Xcode auto-generated provisioning profiles used team `UD763H597N`, but the code had `D35JB5CDG2` hardcoded in App Group IDs and entitlements. The extension was invisible to Mail because the App Group wasn't properly provisioned.
+4. **Team ID mismatch** — If the App Group ID or entitlements use a different Team ID than the one in your provisioning profile, the extension will not appear in Mail. Ensure the same Team ID is used everywhere: Xcode Signing, both entitlement files (application-groups), and `AppGroupConstants.appGroupID`. Create the App Group with that identifier in the Apple Developer portal.
 5. **Info.plist `MEExtensionCapabilities`** — Initially declared as a `<dict>` (caused Mail.app crash: `componentsJoinedByString:` unrecognized selector). Mail expects an `<array>` of strings. Fixed to `<array><string>MEComposeSessionHandler</string></array>`.
 6. **Extension not enabled** — Even after discovery, the extension was disabled by default. Required `pluginkit -e use -i com.mailmate.ai.MailExtension` to enable.
 7. **Stale registrations** — LaunchServices and pluginkit cached old/broken versions. Required `lsregister -f -R -trusted` and xattr clearing.
