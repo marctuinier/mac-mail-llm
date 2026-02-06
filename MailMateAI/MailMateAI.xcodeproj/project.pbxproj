@@ -1,0 +1,571 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001 /* App.swift */; };
+		A1000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000002 /* ContentView.swift */; };
+		A1000003 /* ComposeAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000003 /* ComposeAssistantView.swift */; };
+		A1000004 /* SavedPromptsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000004 /* SavedPromptsView.swift */; };
+		A1000005 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000005 /* SettingsView.swift */; };
+		A1000006 /* ChatEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000006 /* ChatEditView.swift */; };
+		A1000007 /* SavedPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000007 /* SavedPrompt.swift */; };
+		A1000008 /* EmailContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000008 /* EmailContext.swift */; };
+		A1000009 /* ToneSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000009 /* ToneSample.swift */; };
+		A1000010 /* GeminiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000010 /* GeminiService.swift */; };
+		A1000011 /* PasteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000011 /* PasteboardService.swift */; };
+		A1000012 /* MailBridgeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000012 /* MailBridgeService.swift */; };
+		A1000013 /* SharedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000013 /* SharedDataService.swift */; };
+		A1000014 /* default-prompts.json in Resources */ = {isa = PBXBuildFile; fileRef = B1000014 /* default-prompts.json */; };
+		A1000060 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1000016 /* Assets.xcassets */; };
+		A1000061 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = B1000017 /* AppIcon.icns */; };
+		A2000070 /* ToolbarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = B2000070 /* ToolbarIcon.png */; };
+		A2000071 /* ToolbarIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = B2000071 /* ToolbarIcon@2x.png */; };
+		A1000015 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000020 /* AppGroupConstants.swift */; };
+		A1000016 /* EmailContextModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000021 /* EmailContextModel.swift */; };
+		A1000017 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000030 /* KeychainService.swift */; };
+		A1000018 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000031 /* OnboardingView.swift */; };
+		A2000001 /* ComposeSessionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000001 /* ComposeSessionHandler.swift */; };
+		A2000002 /* ToolbarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000002 /* ToolbarViewController.swift */; };
+		A2000003 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000020 /* AppGroupConstants.swift */; };
+		A2000004 /* EmailContextModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000021 /* EmailContextModel.swift */; };
+		A2000005 /* MailExtensionPrincipal.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000005 /* MailExtensionPrincipal.swift */; };
+		A2000006 /* ExtensionGeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000006 /* ExtensionGeminiClient.swift */; };
+		A2000007 /* GenerationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000007 /* GenerationManager.swift */; };
+		A3000001 /* MailExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D2000000 /* MailExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C1000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E1000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = T2000000;
+			remoteInfo = MailExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F1000001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A3000001 /* MailExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		B1000001 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		B1000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B1000003 /* ComposeAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeAssistantView.swift; sourceTree = "<group>"; };
+		B1000004 /* SavedPromptsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPromptsView.swift; sourceTree = "<group>"; };
+		B1000005 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B1000006 /* ChatEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatEditView.swift; sourceTree = "<group>"; };
+		B1000007 /* SavedPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPrompt.swift; sourceTree = "<group>"; };
+		B1000008 /* EmailContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailContext.swift; sourceTree = "<group>"; };
+		B1000009 /* ToneSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToneSample.swift; sourceTree = "<group>"; };
+		B1000010 /* GeminiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiService.swift; sourceTree = "<group>"; };
+		B1000011 /* PasteboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardService.swift; sourceTree = "<group>"; };
+		B1000012 /* MailBridgeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailBridgeService.swift; sourceTree = "<group>"; };
+		B1000013 /* SharedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDataService.swift; sourceTree = "<group>"; };
+		B1000014 /* default-prompts.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "default-prompts.json"; sourceTree = "<group>"; };
+		B1000016 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B1000017 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+		B2000070 /* ToolbarIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ToolbarIcon.png"; sourceTree = "<group>"; };
+		B2000071 /* ToolbarIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ToolbarIcon@2x.png"; sourceTree = "<group>"; };
+		B1000020 /* AppGroupConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupConstants.swift; sourceTree = "<group>"; };
+		B1000021 /* EmailContextModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailContextModel.swift; sourceTree = "<group>"; };
+		B1000030 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		B1000031 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		B2000001 /* ComposeSessionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeSessionHandler.swift; sourceTree = "<group>"; };
+		B2000002 /* ToolbarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarViewController.swift; sourceTree = "<group>"; };
+		B2000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2000004 /* MailExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MailExtension.entitlements; sourceTree = "<group>"; };
+		B2000005 /* MailExtensionPrincipal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailExtensionPrincipal.swift; sourceTree = "<group>"; };
+		B2000006 /* ExtensionGeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionGeminiClient.swift; sourceTree = "<group>"; };
+		B2000007 /* GenerationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationManager.swift; sourceTree = "<group>"; };
+		B3000001 /* MailMateAI.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MailMateAI.entitlements; sourceTree = "<group>"; };
+		B3000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D1000000 /* MailMateAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MailMateAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D2000000 /* MailExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MailExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F2000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F2000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G0000000 = {
+			isa = PBXGroup;
+			children = (
+				G1000000 /* MailMateAI */,
+				G2000000 /* MailExtension */,
+				G3000000 /* Shared */,
+				G9000000 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G1000000 /* MailMateAI */ = {
+			isa = PBXGroup;
+			children = (
+				B3000002 /* Info.plist */,
+				B3000001 /* MailMateAI.entitlements */,
+				B1000016 /* Assets.xcassets */,
+				B1000001 /* App.swift */,
+				B1000002 /* ContentView.swift */,
+				G1100000 /* Views */,
+				G1200000 /* Models */,
+				G1300000 /* Services */,
+				G1400000 /* Resources */,
+			);
+			path = MailMateAI;
+			sourceTree = "<group>";
+		};
+		G1100000 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B1000003 /* ComposeAssistantView.swift */,
+				B1000004 /* SavedPromptsView.swift */,
+				B1000005 /* SettingsView.swift */,
+				B1000006 /* ChatEditView.swift */,
+				B1000031 /* OnboardingView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		G1200000 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B1000007 /* SavedPrompt.swift */,
+				B1000008 /* EmailContext.swift */,
+				B1000009 /* ToneSample.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		G1300000 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B1000010 /* GeminiService.swift */,
+				B1000011 /* PasteboardService.swift */,
+				B1000012 /* MailBridgeService.swift */,
+				B1000013 /* SharedDataService.swift */,
+				B1000030 /* KeychainService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		G1400000 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B1000014 /* default-prompts.json */,
+				B1000017 /* AppIcon.icns */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		G2000000 /* MailExtension */ = {
+			isa = PBXGroup;
+			children = (
+				B2000005 /* MailExtensionPrincipal.swift */,
+				B2000001 /* ComposeSessionHandler.swift */,
+				B2000002 /* ToolbarViewController.swift */,
+				B2000006 /* ExtensionGeminiClient.swift */,
+				B2000007 /* GenerationManager.swift */,
+				B2000070 /* ToolbarIcon.png */,
+				B2000071 /* ToolbarIcon@2x.png */,
+				B2000003 /* Info.plist */,
+				B2000004 /* MailExtension.entitlements */,
+			);
+			path = MailExtension;
+			sourceTree = "<group>";
+		};
+		G3000000 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				B1000020 /* AppGroupConstants.swift */,
+				B1000021 /* EmailContextModel.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		G9000000 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D1000000 /* MailMateAI.app */,
+				D2000000 /* MailExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		T1000000 /* MailMateAI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = X1000000 /* Build configuration list for PBXNativeTarget "MailMateAI" */;
+			buildPhases = (
+				S1000000 /* Sources */,
+				F2000001 /* Frameworks */,
+				R1000000 /* Resources */,
+				F1000001 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DEP10001 /* PBXTargetDependency */,
+			);
+			name = MailMateAI;
+			productName = MailMateAI;
+			productReference = D1000000 /* MailMateAI.app */;
+			productType = "com.apple.product-type.application";
+		};
+		T2000000 /* MailExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = X2000000 /* Build configuration list for PBXNativeTarget "MailExtension" */;
+			buildPhases = (
+				S2000000 /* Sources */,
+				F2000002 /* Frameworks */,
+				R2000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MailExtension;
+			productName = MailExtension;
+			productReference = D2000000 /* MailExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E1000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					T1000000 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					T2000000 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = X0000000 /* Build configuration list for PBXProject "MailMateAI" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G0000000;
+			productRefGroup = G9000000 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				T1000000 /* MailMateAI */,
+				T2000000 /* MailExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		R1000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000014 /* default-prompts.json in Resources */,
+				A1000060 /* Assets.xcassets in Resources */,
+				A1000061 /* AppIcon.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		R2000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2000070 /* ToolbarIcon.png in Resources */,
+				A2000071 /* ToolbarIcon@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		S1000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001 /* App.swift in Sources */,
+				A1000002 /* ContentView.swift in Sources */,
+				A1000003 /* ComposeAssistantView.swift in Sources */,
+				A1000004 /* SavedPromptsView.swift in Sources */,
+				A1000005 /* SettingsView.swift in Sources */,
+				A1000006 /* ChatEditView.swift in Sources */,
+				A1000007 /* SavedPrompt.swift in Sources */,
+				A1000008 /* EmailContext.swift in Sources */,
+				A1000009 /* ToneSample.swift in Sources */,
+				A1000010 /* GeminiService.swift in Sources */,
+				A1000011 /* PasteboardService.swift in Sources */,
+				A1000012 /* MailBridgeService.swift in Sources */,
+				A1000013 /* SharedDataService.swift in Sources */,
+				A1000015 /* AppGroupConstants.swift in Sources */,
+				A1000016 /* EmailContextModel.swift in Sources */,
+				A1000017 /* KeychainService.swift in Sources */,
+				A1000018 /* OnboardingView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		S2000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2000005 /* MailExtensionPrincipal.swift in Sources */,
+				A2000001 /* ComposeSessionHandler.swift in Sources */,
+				A2000002 /* ToolbarViewController.swift in Sources */,
+				A2000006 /* ExtensionGeminiClient.swift in Sources */,
+				A2000007 /* GenerationManager.swift in Sources */,
+				A2000003 /* AppGroupConstants.swift in Sources */,
+				A2000004 /* EmailContextModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DEP10001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = T2000000 /* MailExtension */;
+			targetProxy = C1000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		CF000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CF000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		CF100001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MailMateAI/MailMateAI.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UD763H597N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MailMateAI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MailMate AI";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = NO;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CF100002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MailMateAI/MailMateAI.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UD763H597N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MailMateAI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MailMate AI";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = NO;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		CF200001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MailExtension/MailExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UD763H597N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MailExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MailMate AI Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai.MailExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CF200002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MailExtension/MailExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UD763H597N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MailExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MailMate AI Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai.MailExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		X0000000 /* Build configuration list for PBXProject "MailMateAI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF000001 /* Debug */,
+				CF000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		X1000000 /* Build configuration list for PBXNativeTarget "MailMateAI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF100001 /* Debug */,
+				CF100002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		X2000000 /* Build configuration list for PBXNativeTarget "MailExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF200001 /* Debug */,
+				CF200002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E1000000 /* Project object */;
+}

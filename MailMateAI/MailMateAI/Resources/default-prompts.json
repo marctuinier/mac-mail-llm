@@ -1,0 +1,38 @@
+[
+    {
+        "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+        "name": "Professional Reply",
+        "instruction": "Write a professional and courteous reply to this email. Keep the tone formal but friendly. Address all points raised in the original email.",
+        "links": [],
+        "signature": "Best regards",
+        "createdAt": "2025-01-01T00:00:00Z",
+        "modifiedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678901",
+        "name": "Friendly Follow-up",
+        "instruction": "Write a warm, friendly follow-up reply. Be conversational but still professional. Express genuine interest in continuing the conversation.",
+        "links": [],
+        "signature": "Cheers",
+        "createdAt": "2025-01-01T00:00:00Z",
+        "modifiedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "id": "C3D4E5F6-A7B8-9012-CDEF-123456789012",
+        "name": "Polite Decline",
+        "instruction": "Write a polite and respectful decline to this email. Be clear but not harsh. Leave the door open for future opportunities.",
+        "links": [],
+        "signature": "Best regards",
+        "createdAt": "2025-01-01T00:00:00Z",
+        "modifiedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "id": "D4E5F6A7-B8C9-0123-DEFA-234567890123",
+        "name": "Quick Acknowledgment",
+        "instruction": "Write a brief acknowledgment reply. Confirm receipt and let them know you will follow up with more details soon. Keep it short and to the point.",
+        "links": [],
+        "signature": "Thanks",
+        "createdAt": "2025-01-01T00:00:00Z",
+        "modifiedAt": "2025-01-01T00:00:00Z"
+    }
+]

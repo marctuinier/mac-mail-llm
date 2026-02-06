@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>MEComposeSession</key>
+			<dict>
+				<key>MEComposeIcon</key>
+				<string>ToolbarIcon</string>
+				<key>MEComposeIconToolTip</key>
+				<string>MailMate AI Assistant</string>
+			</dict>
+			<key>MEExtensionCapabilities</key>
+			<array>
+				<string>MEComposeSessionHandler</string>
+			</array>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.email.extension</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).MailExtensionPrincipal</string>
+	</dict>
+</dict>
+</plist>
