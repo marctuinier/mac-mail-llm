@@ -25,5 +25,8 @@ build/
 # Debug logs
 debug.log
 
+# Local build config (contains Team ID)
+MailMateAI/Local.xcconfig
+
 # Cursor IDE
 .cursor/

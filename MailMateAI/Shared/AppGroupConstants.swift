@@ -4,8 +4,13 @@ import Foundation
 /// via the App Group container.
 enum AppGroupConstants {
     /// The App Group identifier shared between the host app and extension.
-    /// Replace YOUR_TEAM_ID with your Apple Developer Team ID and create this App Group in the developer portal.
-    static let appGroupID = "YOUR_TEAM_ID.group.com.mailmate.ai"
+    /// Set via APP_GROUP_ID in Local.xcconfig (see Local.xcconfig.example).
+    static let appGroupID: String = {
+        if let id = Bundle.main.object(forInfoDictionaryKey: "AppGroupID") as? String, !id.isEmpty, !id.contains("YOUR_TEAM_ID") {
+            return id
+        }
+        return "YOUR_TEAM_ID.group.com.mailmate.ai"
+    }()
 
     /// The URL scheme used by the extension to open the host app.
     static let urlScheme = "mailmate-ai"
