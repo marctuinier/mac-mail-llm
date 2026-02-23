@@ -25,6 +25,7 @@ class ToolbarViewController: MEExtensionViewController {
 
     private var savedPrompts: [(name: String, instruction: String, id: String, links: [(label: String, url: String)], signature: String?)] = []
     private var manager: GenerationManager { GenerationManager.shared }
+    private var heightConstraint: NSLayoutConstraint?
 
     // MARK: - UI Elements
 
@@ -51,17 +52,20 @@ class ToolbarViewController: MEExtensionViewController {
     // MARK: - View Lifecycle
 
     override func loadView() {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 280))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 100))
         container.translatesAutoresizingMaskIntoConstraints = false
         self.view = container
+        self.preferredContentSize = NSSize(width: 320, height: 100)
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        let hc = view.heightAnchor.constraint(equalToConstant: 100)
+        heightConstraint = hc
         NSLayoutConstraint.activate([
             view.widthAnchor.constraint(equalToConstant: 320),
-            view.heightAnchor.constraint(equalToConstant: 280),
+            hc,
         ])
 
         view.addSubview(scrollView)
@@ -302,6 +306,14 @@ class ToolbarViewController: MEExtensionViewController {
         }
     }
 
+    private func resizeToFitContent() {
+        contentStack.layoutSubtreeIfNeeded()
+        let fittingHeight = contentStack.fittingSize.height
+        let clamped = min(max(fittingHeight, 80), 400)
+        heightConstraint?.constant = clamped
+        self.preferredContentSize = NSSize(width: 320, height: clamped)
+    }
+
     private func forceLabelColor(on attrStr: NSAttributedString) -> NSMutableAttributedString {
         let mutable = NSMutableAttributedString(attributedString: attrStr)
         mutable.removeAttribute(.foregroundColor, range: NSRange(location: 0, length: mutable.length))
@@ -375,6 +387,8 @@ class ToolbarViewController: MEExtensionViewController {
             promptScroll.heightAnchor.constraint(equalToConstant: maxH).isActive = true
             promptListStack.widthAnchor.constraint(equalTo: promptScroll.widthAnchor).isActive = true
         }
+
+        resizeToFitContent()
     }
 
     // MARK: - Generating State
@@ -420,6 +434,8 @@ class ToolbarViewController: MEExtensionViewController {
         if !manager.streamingText.isEmpty {
             updateLivePreview(manager.streamingText)
         }
+
+        resizeToFitContent()
     }
 
     // MARK: - Preview State
@@ -520,6 +536,8 @@ class ToolbarViewController: MEExtensionViewController {
         btnRow.orientation = .horizontal; btnRow.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(btnRow)
         btnRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+
+        resizeToFitContent()
     }
 
     // MARK: - Live Preview Update
@@ -669,24 +687,30 @@ class ToolbarViewController: MEExtensionViewController {
             pasteboard.setString(html, forType: .string)
         }
 
-        // Auto-paste: simulate Cmd+V into the compose body after a short delay
-        // (gives time for the popover to dismiss and focus to return to compose body)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.simulatePaste()
+        manager.reset()
+
+        // Auto-paste: simulate Cmd+V after the popover dismisses and focus returns
+        // to the compose body. We use a longer delay to let Mail restore focus.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            self?.simulatePaste()
         }
 
-        manager.reset()
         renderInsertedState()
     }
 
     /// Simulate Cmd+V keystroke to auto-paste clipboard into the compose body.
+    /// Requires Accessibility permission for the process posting the events.
     private func simulatePaste() {
+        guard AXIsProcessTrusted() else { return }
+
         let src = CGEventSource(stateID: CGEventSourceStateID.combinedSessionState)
         // Key down: Cmd+V (keycode 9 = V)
         if let keyDown = CGEvent(keyboardEventSource: src, virtualKey: 9, keyDown: true) {
             keyDown.flags = CGEventFlags.maskCommand
             keyDown.post(tap: CGEventTapLocation.cghidEventTap)
         }
+        // Brief pause between key-down and key-up for reliability
+        usleep(50_000)
         // Key up
         if let keyUp = CGEvent(keyboardEventSource: src, virtualKey: 9, keyDown: false) {
             keyUp.flags = CGEventFlags.maskCommand
@@ -769,6 +793,8 @@ class ToolbarViewController: MEExtensionViewController {
     private func renderInsertedState() {
         clearContent()
 
+        let hasAccessibility = AXIsProcessTrusted()
+
         let check = NSImageView()
         if let img = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil) {
             check.image = img; check.contentTintColor = .systemGreen
@@ -776,8 +802,17 @@ class ToolbarViewController: MEExtensionViewController {
             check.widthAnchor.constraint(equalToConstant: 32).isActive = true
             check.heightAnchor.constraint(equalToConstant: 32).isActive = true
         }
-        let msg = makeLabel("Copied to clipboard!", size: 13, weight: .semibold); msg.alignment = .center
-        let sub = makeLabel("Press ⌘V in the compose body to paste.", size: 11, color: .secondaryLabelColor); sub.alignment = .center
+
+        let msg: NSTextField
+        let sub: NSTextField
+        if hasAccessibility {
+            msg = makeLabel("Inserted into email!", size: 13, weight: .semibold)
+            sub = makeLabel("The reply has been pasted into your compose body.", size: 11, color: .secondaryLabelColor)
+        } else {
+            msg = makeLabel("Copied to clipboard!", size: 13, weight: .semibold)
+            sub = makeLabel("Press ⌘V in the compose body to paste.\nGrant Accessibility permission for auto-paste.", size: 11, color: .secondaryLabelColor)
+        }
+        msg.alignment = .center; sub.alignment = .center
 
         let vstack = NSStackView(views: [check, msg, sub])
         vstack.orientation = .vertical; vstack.alignment = .centerX; vstack.spacing = 6
@@ -788,6 +823,8 @@ class ToolbarViewController: MEExtensionViewController {
         let newBtn = NSButton(title: "Start Over", target: self, action: #selector(startOver))
         newBtn.bezelStyle = .rounded; newBtn.controlSize = .small
         contentStack.addArrangedSubview(newBtn)
+
+        resizeToFitContent()
     }
 
     // MARK: - Error Display
@@ -808,6 +845,8 @@ class ToolbarViewController: MEExtensionViewController {
         let backBtn = NSButton(title: "Go Back", target: self, action: #selector(startOver))
         backBtn.bezelStyle = .rounded; backBtn.controlSize = .small
         contentStack.addArrangedSubview(backBtn)
+
+        resizeToFitContent()
     }
 
     // MARK: - Utility
