@@ -284,7 +284,13 @@ struct SettingsView: View {
         if let existingKey = KeychainService.shared.retrieveAPIKey() {
             apiKey = existingKey
         }
-        geminiModel = dataService.geminiModel
+        let stored = dataService.geminiModel
+        if availableModels.contains(stored) {
+            geminiModel = stored
+        } else {
+            geminiModel = "gemini-2.5-flash"
+            dataService.geminiModel = geminiModel
+        }
         defaultSignature = dataService.defaultSignature
     }
 

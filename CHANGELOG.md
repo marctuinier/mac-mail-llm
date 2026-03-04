@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-04
+
+### Added
+
+- Gemini 3.x model support: `gemini-3.1-pro-preview`, `gemini-3.1-flash-lite-preview`, `gemini-3-flash-preview` added to model picker.
+- `gemini-2.5-flash-lite` added to model picker.
+- README refreshed with badges (Swift, platform, Gemini API, license) and cleaner layout.
+- `CHANGELOG.md` following [Keep a Changelog](https://keepachangelog.com) format.
+
+### Fixed
+
+- Invalid stored model names (e.g. from preview API changes) are now auto-corrected on settings load instead of causing API 404 errors.
+
 ## [1.1.1] - 2026-02-06
 
 ### Changed
@@ -77,7 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom app icon and toolbar icon.
 - DMG packaging for distribution.
 
-[unreleased]: https://github.com/marctuinier/mac-mail-llm/compare/v1.1.1...HEAD
+[unreleased]: https://github.com/marctuinier/mac-mail-llm/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/marctuinier/mac-mail-llm/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/marctuinier/mac-mail-llm/compare/v1.1...v1.1.1
 [1.1.0]: https://github.com/marctuinier/mac-mail-llm/compare/v1.0...v1.1
 [1.0.2]: https://github.com/marctuinier/mac-mail-llm/compare/v1.0.1...v1.0
