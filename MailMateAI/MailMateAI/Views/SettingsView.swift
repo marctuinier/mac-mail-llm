@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showAddToneSample = false
 
     private let availableModels = [
+        "gemini-3.1-flash-lite",
         "gemini-2.5-pro",
         "gemini-2.5-flash",
         "gemini-2.0-flash",
@@ -115,7 +116,7 @@ struct SettingsView: View {
                     dataService.geminiModel = newValue
                 }
 
-                Text("Pro models produce higher-quality replies but are slower. Flash models are faster and cheaper.")
+                Text("Pro models produce higher-quality replies but are slower. Flash models are faster and cheaper. 3.1 Flash-Lite is the fastest and most cost-efficient option.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
