@@ -2,18 +2,6 @@ import MailKit
 import AppKit
 import Security
 
-#if DEBUG
-private func tvLog(_ hId: String, _ loc: String, _ msg: String, _ data: [String: Any] = [:]) {
-    guard let c = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroupConstants.appGroupID) else { return }
-    let p = c.appendingPathComponent("debug.log").path
-    let e: [String: Any] = ["sessionId":"debug-session","runId":"run2","hypothesisId":hId,"location":loc,"message":msg,"data":data,"timestamp":Int(Date().timeIntervalSince1970*1000)]
-    if let d = try? JSONSerialization.data(withJSONObject: e), let s = String(data: d, encoding: .utf8) {
-        if let fh = FileHandle(forWritingAtPath: p) { fh.seekToEndOfFile(); fh.write((s+"\n").data(using:.utf8)!); fh.closeFile() }
-        else { FileManager.default.createFile(atPath: p, contents: (s+"\n").data(using:.utf8)) }
-    }
-}
-#endif
-
 /// The compose extension panel shown inside Mail.app.
 /// Thin UI layer — all generation state lives in GenerationManager (singleton).
 class ToolbarViewController: MEExtensionViewController {
@@ -92,10 +80,6 @@ class ToolbarViewController: MEExtensionViewController {
         refreshEmailContext()
         loadData()
 
-        #if DEBUG
-        tvLog("BG", "viewWillAppear", "restoring state", ["state": "\(manager.state)"])
-        #endif
-
         // Restore UI based on current manager state
         if manager.state == .generating {
             renderGeneratingState()
@@ -155,7 +139,24 @@ class ToolbarViewController: MEExtensionViewController {
         if bodyText.isEmpty, let rawData = composeMsg.rawData {
             let parsed = parseMIMEBody(from: rawData)
             bodyText = parsed.plainText
-            bodyHTML = parsed.html
+            if bodyHTML == nil { bodyHTML = parsed.html }
+        }
+
+        // If MIME parsing found HTML but no plain text, convert HTML to text
+        if bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           let html = bodyHTML, !html.isEmpty {
+            bodyText = html
+                .replacingOccurrences(of: "<br[^>]*>", with: "\n", options: .regularExpression)
+                .replacingOccurrences(of: "</p>", with: "\n\n")
+                .replacingOccurrences(of: "</div>", with: "\n")
+                .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                .replacingOccurrences(of: "&nbsp;", with: " ")
+                .replacingOccurrences(of: "&amp;", with: "&")
+                .replacingOccurrences(of: "&lt;", with: "<")
+                .replacingOccurrences(of: "&gt;", with: ">")
+                .replacingOccurrences(of: "&quot;", with: "\"")
+                .replacingOccurrences(of: "&#39;", with: "'")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
         let isReply = context.action == .reply || context.action == .replyAll || context.action == .forward
@@ -226,9 +227,21 @@ class ToolbarViewController: MEExtensionViewController {
                 continue
             }
             if headers.contains("text/plain") {
-                plainText = headers.contains("quoted-printable") ? decodeQuotedPrintable(body) : body
+                if headers.contains("base64") {
+                    plainText = decodeBase64(body)
+                } else if headers.contains("quoted-printable") {
+                    plainText = decodeQuotedPrintable(body)
+                } else {
+                    plainText = body
+                }
             } else if headers.contains("text/html") {
-                html = headers.contains("quoted-printable") ? decodeQuotedPrintable(body) : body
+                if headers.contains("base64") {
+                    html = decodeBase64(body)
+                } else if headers.contains("quoted-printable") {
+                    html = decodeQuotedPrintable(body)
+                } else {
+                    html = body
+                }
             }
         }
         return (plainText, html)
@@ -252,6 +265,18 @@ class ToolbarViewController: MEExtensionViewController {
             return output
         }
         return result
+    }
+
+    private func decodeBase64(_ input: String) -> String {
+        let cleaned = input
+            .replacingOccurrences(of: "\r\n", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let data = Data(base64Encoded: cleaned),
+              let decoded = String(data: data, encoding: .utf8) else {
+            return input
+        }
+        return decoded
     }
 
     // MARK: - Data Loading
@@ -442,15 +467,6 @@ class ToolbarViewController: MEExtensionViewController {
 
     private func renderPreviewState(html: String) {
         clearContent()
-
-        #if DEBUG
-        tvLog("H1", "renderPreview:entry", "generatedHTML stats", [
-            "htmlLen": html.count,
-            "htmlPrefix": String(html.prefix(300)),
-            "hasCodeFence": html.contains("```"),
-            "isEmpty": html.isEmpty
-        ])
-        #endif
 
         let previewHeader = makeLabel("Preview", size: 12, weight: .bold)
         contentStack.addArrangedSubview(previewHeader)
@@ -648,10 +664,6 @@ class ToolbarViewController: MEExtensionViewController {
         }
         let model = AppGroupConstants.sharedDefaults.string(forKey: AppGroupConstants.geminiModelKey) ?? "gemini-2.5-pro"
 
-        #if DEBUG
-        tvLog("REFINE", "refineButtonClicked", "starting refine", ["instruction": text, "historyCount": manager.geminiClient.conversationHistoryCount])
-        #endif
-
         renderGeneratingState()
 
         manager.refine(apiKey: apiKey, model: model, instruction: text) { [weak self] partial in
@@ -774,9 +786,6 @@ class ToolbarViewController: MEExtensionViewController {
             guard let self = self else { return }
             switch self.manager.state {
             case .preview(let html):
-                #if DEBUG
-                tvLog("BG", "pollComplete", "generation finished", ["htmlLen": html.count])
-                #endif
                 self.renderPreviewState(html: html)
             case .error(let msg):
                 self.showError(msg)

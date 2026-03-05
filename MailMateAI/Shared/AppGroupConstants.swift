@@ -45,6 +45,7 @@ enum AppGroupConstants {
         containerURL.appendingPathComponent("tone-samples.json")
     }
 
+
     // MARK: - UserDefaults Keys
 
     /// Key for the Gemini model preference.

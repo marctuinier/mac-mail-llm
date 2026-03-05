@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-03-05
+
+### Changed
+
+- Rich prompts (500+ characters) are now passed verbatim to Gemini as the system instruction, making prompt handling format-agnostic. Users can write prompts in JSON, markdown, plain text, or any format — no more internal parsing or key detection.
+- Replaced the structured prompt parser (`StructuredPrompt` struct, JSON key extraction, `dictToReadableText`) with a simple length-based threshold. This mirrors the experience of pasting a prompt into Gemini's web chat.
+
+### Fixed
+
+- HTML-only emails (no `text/plain` MIME part) now have their body correctly converted to plain text at the extraction level, ensuring Gemini always receives the full email thread content.
+- Base64-encoded MIME parts are now decoded during email body extraction.
+- Emails from Outlook and other clients that only provide HTML bodies no longer result in empty context being sent to Gemini.
+
+### Removed
+
+- Debug diagnostic logging (`email-extraction-log.json`, `gemini-diagnostic.json`, `debug.log`) removed from production builds.
+- `StructuredPrompt` struct and all associated JSON parsing and repair logic removed in favor of the simpler passthrough approach.
+
 ## [1.2.0] - 2026-03-04
 
 ### Added
@@ -90,7 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom app icon and toolbar icon.
 - DMG packaging for distribution.
 
-[unreleased]: https://github.com/marctuinier/mac-mail-llm/compare/v1.2.0...HEAD
+[unreleased]: https://github.com/marctuinier/mac-mail-llm/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/marctuinier/mac-mail-llm/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/marctuinier/mac-mail-llm/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/marctuinier/mac-mail-llm/compare/v1.1...v1.1.1
 [1.1.0]: https://github.com/marctuinier/mac-mail-llm/compare/v1.0...v1.1
