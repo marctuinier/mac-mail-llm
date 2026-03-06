@@ -13,7 +13,7 @@ No unreleased changes.
 
 ## Released
 
-### [1.3.0] - 2026-03-06
+### [1.3.0](https://github.com/marctuinier/mac-mail-llm/compare/v1.2.1...v1.3.0) - 2026-03-06
 
 #### Added
 
