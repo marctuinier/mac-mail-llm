@@ -27,15 +27,21 @@
 		A2000071 /* ToolbarIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = B2000071 /* ToolbarIcon@2x.png */; };
 		A1000015 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000020 /* AppGroupConstants.swift */; };
 		A1000016 /* EmailContextModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000021 /* EmailContextModel.swift */; };
+		A1000019 /* FlowLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000022 /* FlowLogger.swift */; };
 		A1000017 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000030 /* KeychainService.swift */; };
 		A1000018 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000031 /* OnboardingView.swift */; };
 		A2000001 /* ComposeSessionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000001 /* ComposeSessionHandler.swift */; };
 		A2000002 /* ToolbarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000002 /* ToolbarViewController.swift */; };
 		A2000003 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000020 /* AppGroupConstants.swift */; };
 		A2000004 /* EmailContextModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000021 /* EmailContextModel.swift */; };
+		A2000009 /* FlowLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000022 /* FlowLogger.swift */; };
 		A2000005 /* MailExtensionPrincipal.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000005 /* MailExtensionPrincipal.swift */; };
 		A2000006 /* ExtensionGeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000006 /* ExtensionGeminiClient.swift */; };
 		A2000007 /* GenerationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000007 /* GenerationManager.swift */; };
+		A2000010 /* CallRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000023 /* CallRecord.swift */; };
+		A1000020 /* CallRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000023 /* CallRecord.swift */; };
+		A1000021 /* CallHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000024 /* CallHistoryView.swift */; };
+		A1000022 /* CallDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000025 /* CallDetailView.swift */; };
 		A3000001 /* MailExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D2000000 /* MailExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -84,6 +90,10 @@
 		B2000071 /* ToolbarIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ToolbarIcon@2x.png"; sourceTree = "<group>"; };
 		B1000020 /* AppGroupConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupConstants.swift; sourceTree = "<group>"; };
 		B1000021 /* EmailContextModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailContextModel.swift; sourceTree = "<group>"; };
+		B1000022 /* FlowLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLogger.swift; sourceTree = "<group>"; };
+		B1000023 /* CallRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallRecord.swift; sourceTree = "<group>"; };
+		B1000024 /* CallHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallHistoryView.swift; sourceTree = "<group>"; };
+		B1000025 /* CallDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallDetailView.swift; sourceTree = "<group>"; };
 		B1000030 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		B1000031 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		B2000001 /* ComposeSessionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeSessionHandler.swift; sourceTree = "<group>"; };
@@ -152,6 +162,8 @@
 				B1000004 /* SavedPromptsView.swift */,
 				B1000005 /* SettingsView.swift */,
 				B1000006 /* ChatEditView.swift */,
+				B1000024 /* CallHistoryView.swift */,
+				B1000025 /* CallDetailView.swift */,
 				B1000031 /* OnboardingView.swift */,
 			);
 			path = Views;
@@ -209,6 +221,8 @@
 			children = (
 				B1000020 /* AppGroupConstants.swift */,
 				B1000021 /* EmailContextModel.swift */,
+				B1000022 /* FlowLogger.swift */,
+				B1000023 /* CallRecord.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -340,8 +354,12 @@
 				A1000013 /* SharedDataService.swift in Sources */,
 				A1000015 /* AppGroupConstants.swift in Sources */,
 				A1000016 /* EmailContextModel.swift in Sources */,
+				A1000019 /* FlowLogger.swift in Sources */,
 				A1000017 /* KeychainService.swift in Sources */,
 				A1000018 /* OnboardingView.swift in Sources */,
+				A1000020 /* CallRecord.swift in Sources */,
+				A1000021 /* CallHistoryView.swift in Sources */,
+				A1000022 /* CallDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -356,6 +374,8 @@
 				A2000007 /* GenerationManager.swift in Sources */,
 				A2000003 /* AppGroupConstants.swift in Sources */,
 				A2000004 /* EmailContextModel.swift in Sources */,
+				A2000009 /* FlowLogger.swift in Sources */,
+				A2000010 /* CallRecord.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -446,7 +466,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -475,7 +495,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -500,7 +520,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai.MailExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -526,7 +546,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mailmate.ai.MailExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

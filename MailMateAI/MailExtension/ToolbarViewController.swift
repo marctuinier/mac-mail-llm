@@ -2,6 +2,13 @@ import MailKit
 import AppKit
 import Security
 
+private extension NSFont {
+    var italic: NSFont {
+        let descriptor = fontDescriptor.withSymbolicTraits(.italic)
+        return NSFont(descriptor: descriptor, size: pointSize) ?? self
+    }
+}
+
 /// The compose extension panel shown inside Mail.app.
 /// Thin UI layer — all generation state lives in GenerationManager (singleton).
 class ToolbarViewController: MEExtensionViewController {
@@ -31,9 +38,9 @@ class ToolbarViewController: MEExtensionViewController {
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 6
+        stack.spacing = 4
         stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.edgeInsets = NSEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
+        stack.edgeInsets = NSEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
         return stack
     }()
 
@@ -83,13 +90,12 @@ class ToolbarViewController: MEExtensionViewController {
         // Restore UI based on current manager state
         if manager.state == .generating {
             renderGeneratingState()
-            // Re-attach the streaming callback to our live preview
-            manager.geminiClient.onToken = { [weak self] partial in
-                DispatchQueue.main.async {
-                    self?.updateLivePreview(partial)
-                }
+            manager.geminiClient.onThinking = { [weak self] thinking in
+                DispatchQueue.main.async { self?.updateThinkingPreview(thinking) }
             }
-            // Resume polling so we detect when generation finishes
+            manager.geminiClient.onToken = { [weak self] partial in
+                DispatchQueue.main.async { self?.updateLivePreview(partial) }
+            }
             pollForCompletion()
         } else {
             renderFromState()
@@ -170,6 +176,19 @@ class ToolbarViewController: MEExtensionViewController {
             "isReply": isReply,
             "originalFrom": originalFrom,
         ]
+
+        FlowLogger.log(step: "extraction", data: [
+            "subject": subject,
+            "fromAddress": fromAddress,
+            "originalFrom": originalFrom,
+            "recipients": recipients,
+            "isReply": isReply,
+            "bodyText_length": bodyText.count,
+            "bodyText": bodyText,
+            "bodyHTML_length": bodyHTML?.count ?? 0,
+            "hadPlainText": bodyText.count > 0 && bodyHTML != nil,
+            "usedHTMLFallback": bodyText.count > 0 && bodyHTML != nil && originalMsg?.rawData != nil,
+        ])
 
         let model = EmailContextModel(
             subject: subject, fromAddress: fromAddress,
@@ -357,7 +376,7 @@ class ToolbarViewController: MEExtensionViewController {
         let headerRow = NSStackView(views: [header, NSView(), gearBtn])
         headerRow.orientation = .horizontal; headerRow.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(headerRow)
-        headerRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+        headerRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
 
         let field = NSTextField()
         field.placeholderString = "What would you like to draft?"
@@ -368,7 +387,7 @@ class ToolbarViewController: MEExtensionViewController {
         field.identifier = NSUserInterfaceItemIdentifier("promptField")
         field.target = self; field.action = #selector(promptFieldSubmitted(_:))
         contentStack.addArrangedSubview(field)
-        field.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+        field.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
         field.heightAnchor.constraint(greaterThanOrEqualToConstant: 22).isActive = true
 
         let generateBtn = NSButton(title: "Generate", target: self, action: #selector(generateFromField))
@@ -383,7 +402,7 @@ class ToolbarViewController: MEExtensionViewController {
 
         let divider = NSBox(); divider.boxType = .separator; divider.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(divider)
-        divider.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+        divider.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
 
         let promptsLabel = makeLabel("Saved Prompts", size: 11, weight: .medium, color: .secondaryLabelColor)
         contentStack.addArrangedSubview(promptsLabel)
@@ -391,7 +410,7 @@ class ToolbarViewController: MEExtensionViewController {
         if savedPrompts.isEmpty {
             let empty = makeLabel("No saved prompts yet. Add some in the MailMate AI app.", size: 11, color: .tertiaryLabelColor)
             contentStack.addArrangedSubview(empty)
-            empty.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+            empty.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
         } else {
             let promptListStack = NSStackView()
             promptListStack.orientation = .vertical; promptListStack.alignment = .leading; promptListStack.spacing = 3
@@ -407,7 +426,7 @@ class ToolbarViewController: MEExtensionViewController {
             promptScroll.translatesAutoresizingMaskIntoConstraints = false
             promptScroll.documentView = promptListStack
             contentStack.addArrangedSubview(promptScroll)
-            promptScroll.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+            promptScroll.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
             let maxH = min(CGFloat(savedPrompts.count) * 31, 130)
             promptScroll.heightAnchor.constraint(equalToConstant: maxH).isActive = true
             promptListStack.widthAnchor.constraint(equalTo: promptScroll.widthAnchor).isActive = true
@@ -420,42 +439,38 @@ class ToolbarViewController: MEExtensionViewController {
 
     private func renderGeneratingState() {
         clearContent()
+        hasTransitionedToEmail = false
 
-        let spinner = NSProgressIndicator()
-        spinner.style = .spinning; spinner.controlSize = .small
-        spinner.startAnimation(nil); spinner.translatesAutoresizingMaskIntoConstraints = false
+        // Phase label at top
+        let phaseLabel = makeLabel("💭 Thinking...", size: 11, weight: .medium, color: .secondaryLabelColor)
+        phaseLabel.identifier = NSUserInterfaceItemIdentifier("phaseLabel")
+        contentStack.addArrangedSubview(phaseLabel)
 
-        let label = makeLabel("Generating reply...", size: 12, color: .secondaryLabelColor)
-        let row = NSStackView(views: [spinner, label])
-        row.orientation = .horizontal; row.spacing = 6
-        contentStack.addArrangedSubview(row)
+        // Single full-panel text view used for both thinking and email
+        let streamText = NSTextView()
+        streamText.isEditable = false; streamText.isSelectable = true
+        streamText.drawsBackground = false
+        streamText.font = NSFont.systemFont(ofSize: 11).italic
+        streamText.textColor = NSColor.secondaryLabelColor.withAlphaComponent(0.85)
+        streamText.identifier = NSUserInterfaceItemIdentifier("livePreview")
+        streamText.textContainerInset = NSSize(width: 6, height: 6)
+        streamText.isVerticallyResizable = true
+        streamText.isHorizontallyResizable = false
+        streamText.autoresizingMask = [.width]
+        streamText.textContainer?.widthTracksTextView = true
+        streamText.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
+        streamText.frame = NSRect(x: 0, y: 0, width: 312, height: 0)
 
-        let previewText = NSTextView()
-        previewText.isEditable = false; previewText.isSelectable = true
-        previewText.drawsBackground = false
-        previewText.font = .systemFont(ofSize: 11); previewText.textColor = .labelColor
-        previewText.identifier = NSUserInterfaceItemIdentifier("livePreview")
-        previewText.textContainerInset = NSSize(width: 2, height: 2)
-        previewText.isVerticallyResizable = true
-        previewText.isHorizontallyResizable = false
-        previewText.autoresizingMask = [.width]
-        previewText.textContainer?.widthTracksTextView = true
-        previewText.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
+        let streamScroll = NSScrollView()
+        streamScroll.hasVerticalScroller = true; streamScroll.autohidesScrollers = true
+        streamScroll.borderType = .noBorder; streamScroll.drawsBackground = false
+        streamScroll.translatesAutoresizingMaskIntoConstraints = false
+        streamScroll.documentView = streamText
 
-        let previewScroll = NSScrollView()
-        previewScroll.hasVerticalScroller = true; previewScroll.autohidesScrollers = true
-        previewScroll.borderType = .noBorder; previewScroll.drawsBackground = false
-        previewScroll.translatesAutoresizingMaskIntoConstraints = false
-        previewScroll.documentView = previewText
-        previewScroll.wantsLayer = true; previewScroll.layer?.cornerRadius = 6
-        previewScroll.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.3).cgColor
-        previewText.frame = NSRect(x: 0, y: 0, width: 280, height: 0)
+        contentStack.addArrangedSubview(streamScroll)
+        streamScroll.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
+        streamScroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 200).isActive = true
 
-        contentStack.addArrangedSubview(previewScroll)
-        previewScroll.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
-        previewScroll.heightAnchor.constraint(equalToConstant: 180).isActive = true
-
-        // If we already have streaming text (panel was reopened mid-generation), show it
         if !manager.streamingText.isEmpty {
             updateLivePreview(manager.streamingText)
         }
@@ -500,13 +515,13 @@ class ToolbarViewController: MEExtensionViewController {
         previewScroll.borderType = .noBorder; previewScroll.drawsBackground = false
         previewScroll.translatesAutoresizingMaskIntoConstraints = false
         previewScroll.documentView = textView
-        previewScroll.wantsLayer = true; previewScroll.layer?.cornerRadius = 6
-        previewScroll.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.3).cgColor
+        previewScroll.wantsLayer = true; previewScroll.layer?.cornerRadius = 4
+        previewScroll.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.25).cgColor
 
         contentStack.addArrangedSubview(previewScroll)
-        previewScroll.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
-        previewScroll.heightAnchor.constraint(equalToConstant: 130).isActive = true
-        textView.frame = NSRect(x: 0, y: 0, width: 280, height: 0)
+        previewScroll.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
+        previewScroll.heightAnchor.constraint(equalToConstant: 140).isActive = true
+        textView.frame = NSRect(x: 0, y: 0, width: 308, height: 0)
         textView.sizeToFit()
 
         // Refine section: label + text field + button in a row
@@ -534,7 +549,7 @@ class ToolbarViewController: MEExtensionViewController {
         refineRow.orientation = .horizontal; refineRow.spacing = 6
         refineRow.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(refineRow)
-        refineRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+        refineRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
         refineField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         refineBtn.setContentHuggingPriority(.required, for: .horizontal)
         refineBtn.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -551,26 +566,62 @@ class ToolbarViewController: MEExtensionViewController {
         let btnRow = NSStackView(views: [startOverBtn, NSView(), insertBtn])
         btnRow.orientation = .horizontal; btnRow.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(btnRow)
-        btnRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+        btnRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
 
         resizeToFitContent()
     }
 
     // MARK: - Live Preview Update
 
-    private func updateLivePreview(_ partial: String) {
-        if let textView = findView(withId: "livePreview") as? NSTextView {
-            var clean = partial
-            if clean.hasPrefix("```") {
-                if let nl = clean.firstIndex(of: "\n") { clean = String(clean[clean.index(after: nl)...]) }
-            }
-            if clean.hasSuffix("```") { clean = String(clean.dropLast(3)) }
-            let plain = clean
-                .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            textView.string = plain
-            textView.textColor = .labelColor
+    /// Tracks whether we've transitioned from thinking to email writing
+    private var hasTransitionedToEmail = false
+
+    private func updateThinkingPreview(_ thinking: String) {
+        guard !hasTransitionedToEmail,
+              let textView = findView(withId: "livePreview") as? NSTextView else { return }
+
+        let cleaned = thinking
+            .replacingOccurrences(of: "**", with: "")
+            .replacingOccurrences(of: "__", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return }
+
+        textView.font = NSFont.systemFont(ofSize: 11).italic
+        textView.textColor = NSColor.secondaryLabelColor.withAlphaComponent(0.85)
+        textView.string = cleaned
+        textView.scrollToEndOfDocument(nil)
+
+        if let phaseLabel = findView(withId: "phaseLabel") as? NSTextField {
+            phaseLabel.stringValue = "💭 Reasoning..."
         }
+    }
+
+    private func updateLivePreview(_ partial: String) {
+        guard let textView = findView(withId: "livePreview") as? NSTextView else { return }
+
+        var clean = partial
+        if clean.hasPrefix("```") {
+            if let nl = clean.firstIndex(of: "\n") { clean = String(clean[clean.index(after: nl)...]) }
+        }
+        if clean.hasSuffix("```") { clean = String(clean.dropLast(3)) }
+        let plain = clean
+            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !plain.isEmpty else { return }
+
+        // Transition: switch from italic thinking to normal email text
+        if !hasTransitionedToEmail {
+            hasTransitionedToEmail = true
+            textView.font = .systemFont(ofSize: 11)
+            textView.textColor = .labelColor
+            if let phaseLabel = findView(withId: "phaseLabel") as? NSTextField {
+                phaseLabel.stringValue = "✍️ Writing..."
+            }
+        }
+
+        textView.string = plain
+        textView.scrollToEndOfDocument(nil)
     }
 
     // MARK: - Helpers
@@ -666,7 +717,12 @@ class ToolbarViewController: MEExtensionViewController {
 
         renderGeneratingState()
 
-        manager.refine(apiKey: apiKey, model: model, instruction: text) { [weak self] partial in
+        manager.refine(
+            apiKey: apiKey, model: model, instruction: text,
+            onThinkingUpdate: { [weak self] thinking in
+                DispatchQueue.main.async { self?.updateThinkingPreview(thinking) }
+            }
+        ) { [weak self] partial in
             DispatchQueue.main.async { self?.updateLivePreview(partial) }
         }
 
@@ -769,7 +825,10 @@ class ToolbarViewController: MEExtensionViewController {
         manager.generate(
             apiKey: apiKey, model: model,
             instruction: instruction, links: links,
-            signature: sig, toneSamples: toneSamples
+            signature: sig, toneSamples: toneSamples,
+            onThinkingUpdate: { [weak self] thinking in
+                DispatchQueue.main.async { self?.updateThinkingPreview(thinking) }
+            }
         ) { [weak self] partial in
             DispatchQueue.main.async { self?.updateLivePreview(partial) }
         }
@@ -827,7 +886,7 @@ class ToolbarViewController: MEExtensionViewController {
         vstack.orientation = .vertical; vstack.alignment = .centerX; vstack.spacing = 6
         vstack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(vstack)
-        vstack.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+        vstack.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
 
         let newBtn = NSButton(title: "Start Over", target: self, action: #selector(startOver))
         newBtn.bezelStyle = .rounded; newBtn.controlSize = .small
@@ -849,13 +908,62 @@ class ToolbarViewController: MEExtensionViewController {
         let row = NSStackView(views: [icon, label])
         row.orientation = .horizontal; row.spacing = 6
         contentStack.addArrangedSubview(row)
-        row.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -20).isActive = true
+        row.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
 
-        let backBtn = NSButton(title: "Go Back", target: self, action: #selector(startOver))
-        backBtn.bezelStyle = .rounded; backBtn.controlSize = .small
-        contentStack.addArrangedSubview(backBtn)
+        // Show Retry if we have a previous request to replay
+        if manager.lastRequest != nil {
+            let retryBtn = NSButton(title: " Retry", target: self, action: #selector(retryLastRequest))
+            retryBtn.bezelStyle = .rounded; retryBtn.controlSize = .regular
+            retryBtn.font = .systemFont(ofSize: 12, weight: .medium)
+            retryBtn.contentTintColor = .controlAccentColor
+            if let img = NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: nil) {
+                retryBtn.image = img; retryBtn.imagePosition = .imageLeading
+            }
+
+            let backBtn = NSButton(title: "Start Over", target: self, action: #selector(startOver))
+            backBtn.bezelStyle = .rounded; backBtn.controlSize = .small
+
+            let btnRow = NSStackView(views: [retryBtn, NSView(), backBtn])
+            btnRow.orientation = .horizontal
+            btnRow.translatesAutoresizingMaskIntoConstraints = false
+            contentStack.addArrangedSubview(btnRow)
+            btnRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
+        } else {
+            let backBtn = NSButton(title: "Go Back", target: self, action: #selector(startOver))
+            backBtn.bezelStyle = .rounded; backBtn.controlSize = .small
+            contentStack.addArrangedSubview(backBtn)
+        }
 
         resizeToFitContent()
+    }
+
+    @objc private func retryLastRequest() {
+        guard let req = manager.lastRequest else { return }
+        if req.isRefine {
+            renderGeneratingState()
+            manager.refine(
+                apiKey: req.apiKey, model: req.model, instruction: req.instruction,
+                onThinkingUpdate: { [weak self] thinking in
+                    DispatchQueue.main.async { self?.updateThinkingPreview(thinking) }
+                }
+            ) { [weak self] partial in
+                DispatchQueue.main.async { self?.updateLivePreview(partial) }
+            }
+            pollForCompletion()
+        } else {
+            renderGeneratingState()
+            manager.generate(
+                apiKey: req.apiKey, model: req.model,
+                instruction: req.instruction, links: req.links,
+                signature: req.signature, toneSamples: req.toneSamples,
+                onThinkingUpdate: { [weak self] thinking in
+                    DispatchQueue.main.async { self?.updateThinkingPreview(thinking) }
+                }
+            ) { [weak self] partial in
+                DispatchQueue.main.async { self?.updateLivePreview(partial) }
+            }
+            pollForCompletion()
+        }
     }
 
     // MARK: - Utility

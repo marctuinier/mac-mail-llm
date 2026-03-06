@@ -41,12 +41,14 @@ final class AppState: ObservableObject {
     @Published var emailContext: EmailContextModel?
     @Published var generatedHTML: String = ""
     @Published var showOnboarding: Bool = false
+    @Published var callHistory: [CallRecord] = []
 
     private let dataService = SharedDataService.shared
 
     init() {
         loadData()
         listenForEmailContextUpdates()
+        listenForCallHistoryUpdates()
     }
 
     func loadData() {
@@ -54,6 +56,7 @@ final class AppState: ObservableObject {
         toneSamples = dataService.loadToneSamples()
         emailContext = dataService.readEmailContext()
         showOnboarding = !dataService.onboardingCompleted
+        loadCallHistory()
     }
 
     func savePrompts() {
@@ -66,6 +69,15 @@ final class AppState: ObservableObject {
 
     func refreshEmailContext() {
         emailContext = dataService.readEmailContext()
+    }
+
+    func loadCallHistory() {
+        callHistory = CallHistoryStore.loadAll().sorted { $0.timestamp > $1.timestamp }
+    }
+
+    func clearCallHistory() {
+        CallHistoryStore.clear()
+        callHistory = []
     }
 
     func completeOnboarding() {
@@ -82,6 +94,18 @@ final class AppState: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             self?.refreshEmailContext()
+        }
+    }
+
+    /// Listen for distributed notifications from the Mail extension
+    /// when a new call history record is written.
+    private func listenForCallHistoryUpdates() {
+        DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name(AppGroupConstants.callHistoryUpdatedNotification),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadCallHistory()
         }
     }
 }

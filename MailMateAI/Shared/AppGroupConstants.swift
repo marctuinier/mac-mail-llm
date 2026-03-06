@@ -45,6 +45,15 @@ enum AppGroupConstants {
         containerURL.appendingPathComponent("tone-samples.json")
     }
 
+    /// Path to the pipeline flow log (captures extraction, generation, and refinement steps).
+    static var flowLogFileURL: URL {
+        containerURL.appendingPathComponent("flow-log.json")
+    }
+
+    /// Path to the call history JSON file (audit log of generation/refinement calls).
+    static var callHistoryFileURL: URL {
+        containerURL.appendingPathComponent("call-history.json")
+    }
 
     // MARK: - UserDefaults Keys
 
@@ -67,4 +76,7 @@ enum AppGroupConstants {
 
     /// Posted by the extension when new email context is available.
     static let emailContextUpdatedNotification = "com.mailmate.ai.emailContextUpdated"
+
+    /// Posted by the extension when a new call history record is written.
+    static let callHistoryUpdatedNotification = "com.mailmate.ai.callHistoryUpdated"
 }

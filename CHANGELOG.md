@@ -13,6 +13,31 @@ No unreleased changes.
 
 ## Released
 
+### [1.3.0] - 2026-03-06
+
+#### Added
+
+- **Gemini Native Thinking / Reasoning**: The AI's reasoning process is now visible in the extension panel during both initial generation and refinement. Uses Gemini's native `thinking_config` API for genuine multi-step reasoning.
+- Thinking streams live in italic text, then transitions seamlessly to the email output — the full panel is used edge-to-edge.
+- Dynamic phase label shows "Thinking..." during reasoning and "Writing..." during email generation.
+- **Auto-Retry on Errors**: Transient network errors, timeouts, and API rate limits (429/5xx) are automatically retried up to 2 times with increasing delays. Request timeout increased to 120s.
+- **Retry Button**: When generation fails, a "Retry" button appears alongside "Start Over", preserving the last request context so you can retry without re-entering everything.
+- **Call History / Audit Log**: New "Call History" tab in the host app sidebar showing a table of all past generation and refinement calls, with status (green/red), date/time, model, token usage, and estimated cost.
+- Click any row to open a detail view with full instruction, AI thinking, generated output, and metadata.
+- "Copy Instruction" button on the detail view for easy retry via the Mail extension.
+- Token usage tracking: `usageMetadata` (prompt tokens, candidate tokens, thinking tokens, total tokens) is now captured from the Gemini API streaming response.
+- Estimated cost calculation based on published Gemini API pricing per model.
+- Call duration tracking for each generation and refinement request.
+- Live refresh: the Call History table updates automatically when the Mail extension completes a new call.
+- "Clear History" button to wipe all stored call records.
+
+#### Changed
+
+- Refinement now reuses the original system prompt context and explicitly instructs Gemini to keep the current reply intact unless the user asks for a rewrite or restructure.
+- `ExtensionGeminiClient.streamGenerate` now returns a `GenerationResult` struct containing the generated text, usage metadata, and thinking text.
+- `GenerationManager` writes a `CallRecord` to the shared App Group container after every generation or refinement call (both success and failure).
+- Extension panel UI uses tighter spacing and edge-to-edge layout for a cleaner, more native feel.
+
 ### [1.2.1](https://github.com/marctuinier/mac-mail-llm/compare/v1.2.0...v1.2.1) - 2026-03-05
 
 #### Changed

@@ -27,6 +27,7 @@ struct ContentView: View {
 
     enum SidebarTab: String, CaseIterable, Identifiable {
         case prompts = "Saved Prompts"
+        case history = "Call History"
         case settings = "Settings"
 
         var id: String { rawValue }
@@ -34,6 +35,7 @@ struct ContentView: View {
         var icon: String {
             switch self {
             case .prompts: return "text.bubble"
+            case .history: return "clock.arrow.circlepath"
             case .settings: return "gear"
             }
         }
@@ -66,6 +68,8 @@ struct ContentView: View {
         switch selectedTab {
         case .prompts:
             SavedPromptsView()
+        case .history:
+            CallHistoryView()
         case .settings:
             SettingsView()
         case .none:

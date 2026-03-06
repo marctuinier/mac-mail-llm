@@ -7,11 +7,21 @@ final class ExtensionGeminiClient {
     private var conversationHistory: [[String: Any]] = []
     private var lastSystemPrompt: String = ""
 
-    /// Called incrementally as tokens stream in.
+    /// Called incrementally as email tokens stream in (full accumulated email text).
     var onToken: ((String) -> Void)?
+
+    /// Called incrementally as thinking tokens stream in (full accumulated thought summary).
+    var onThinking: ((String) -> Void)?
 
     /// Number of messages in conversation history (for debugging).
     var conversationHistoryCount: Int { conversationHistory.count }
+
+    /// Result of a streaming generation call, including text and token usage.
+    struct GenerationResult {
+        let text: String
+        let usage: UsageMetadata?
+        let thinkingText: String?
+    }
 
     // MARK: - Public API
 
@@ -24,7 +34,7 @@ final class ExtensionGeminiClient {
         links: [(label: String, url: String)],
         signature: String,
         toneSamples: [(label: String, text: String)]
-    ) async throws -> String {
+    ) async throws -> GenerationResult {
         conversationHistory = []
 
         let rich = isRichPrompt(instruction)
@@ -44,6 +54,16 @@ final class ExtensionGeminiClient {
             ["role": "user", "parts": [["text": userMessage]]]
         ]
 
+        FlowLogger.log(step: "generate", data: [
+            "model": model,
+            "isRichPrompt": rich,
+            "systemPrompt_length": systemPrompt.count,
+            "systemPrompt": systemPrompt,
+            "userMessage_length": userMessage.count,
+            "userMessage": userMessage,
+            "instruction_length": instruction.count,
+        ])
+
         let result = try await streamGenerate(
             apiKey: apiKey, model: model,
             systemInstruction: systemPrompt,
@@ -51,33 +71,66 @@ final class ExtensionGeminiClient {
         )
 
         conversationHistory.append(
-            ["role": "model", "parts": [["text": result]]]
+            ["role": "model", "parts": [["text": result.text]]]
         )
+
+        FlowLogger.log(step: "generate_result", data: [
+            "result_length": result.text.count,
+            "result": result.text,
+            "conversationHistory_count": conversationHistory.count,
+        ])
 
         return result
     }
 
-    func editReply(apiKey: String, model: String, instruction: String) async throws -> String {
+    func editReply(apiKey: String, model: String, instruction: String) async throws -> GenerationResult {
+        let refineMessage = """
+        The user wants to refine the email you just wrote. Their request: "\(instruction)"
+
+        Think carefully about how to integrate this change naturally. Consider what the user \
+        is asking, what parts of the current email should stay untouched, and how to maintain \
+        a cohesive flow. If the request references something from the original instructions \
+        (links, facts, tone rules), pull it in while keeping the message natural.
+
+        Do not rewrite or restructure parts the user didn't ask to change, unless it's \
+        necessary to maintain natural flow.
+
+        Return the complete updated email in HTML format.
+        """
+
         conversationHistory.append(
-            ["role": "user", "parts": [["text": "Please modify the email reply based on this feedback: \(instruction). Return only the updated email HTML, nothing else."]]]
+            ["role": "user", "parts": [["text": refineMessage]]]
         )
 
-        let systemEdit = """
-        You are an email editing assistant. The user wants to modify the previously generated email reply.
-        Apply the requested changes while preserving the emotional tone, empathy, and direct acknowledgment
-        of the original sender's concerns. Keep the same human, conversational quality.
-        Return ONLY the complete updated email in HTML format. Do not include any explanation or markdown.
-        """
+        let systemInstruction = lastSystemPrompt.isEmpty
+            ? "You are an email editing assistant. Apply the requested change to the previously generated email. Return ONLY the complete updated email in HTML format."
+            : lastSystemPrompt
+
+        FlowLogger.log(step: "refine", data: [
+            "model": model,
+            "userInstruction": instruction,
+            "refineMessage": refineMessage,
+            "usesOriginalSystemPrompt": !lastSystemPrompt.isEmpty,
+            "systemPrompt_length": systemInstruction.count,
+            "systemPrompt": systemInstruction,
+            "conversationHistory_count": conversationHistory.count,
+        ])
 
         let result = try await streamGenerate(
             apiKey: apiKey, model: model,
-            systemInstruction: systemEdit,
+            systemInstruction: systemInstruction,
             contents: conversationHistory
         )
 
         conversationHistory.append(
-            ["role": "model", "parts": [["text": result]]]
+            ["role": "model", "parts": [["text": result.text]]]
         )
+
+        FlowLogger.log(step: "refine_result", data: [
+            "result_length": result.text.count,
+            "result": result.text,
+            "conversationHistory_count": conversationHistory.count,
+        ])
 
         return result
     }
@@ -110,10 +163,6 @@ final class ExtensionGeminiClient {
         var parts: [String] = []
 
         if isRichPrompt(instruction) {
-            // Rich prompt: pass the user's instruction verbatim as the system context.
-            // This is format-agnostic — works with JSON, markdown, plain text, anything.
-            // Gemini interprets the full prompt directly, identical to pasting it into
-            // the web chat.
             parts.append("""
             You are an expert email reply assistant. The user has provided detailed instructions \
             below that define your identity, tone, context, and reply logic. Read and follow ALL \
@@ -130,7 +179,6 @@ final class ExtensionGeminiClient {
             === END USER INSTRUCTIONS ===
             """)
         } else {
-            // Short instruction: use the default empathetic reply approach
             parts.append("""
             You are an expert email reply assistant. Your task is to generate thoughtful, human email replies
             in HTML format. The reply should be ready to paste directly into an email client.
@@ -221,8 +269,6 @@ final class ExtensionGeminiClient {
         }
 
         if isRichPrompt {
-            // Rich prompts are already in the system instruction — just tell
-            // Gemini to draft the reply using everything it was given.
             message += "Using all the instructions, context, and guidelines provided in your system prompt, compose a reply to the email thread above. Draft as if you are the sender, directly addressing the recipient's specific concerns.\n"
         } else {
             message += "INSTRUCTION: \(instruction)\n"
@@ -235,10 +281,19 @@ final class ExtensionGeminiClient {
 
     // MARK: - Streaming API
 
+    /// Determine the appropriate thinking level for the model.
+    /// Gemini 3.x models use `thinkingLevel`, older 2.5 models use `thinkingBudget`.
+    private func thinkingConfig(for model: String) -> [String: Any] {
+        if model.hasPrefix("gemini-3") {
+            return ["includeThoughts": true, "thinkingLevel": "medium"]
+        }
+        return ["includeThoughts": true, "thinkingBudget": 2048]
+    }
+
     private func streamGenerate(
         apiKey: String, model: String,
         systemInstruction: String, contents: [[String: Any]]
-    ) async throws -> String {
+    ) async throws -> GenerationResult {
         let urlString = "\(baseURL)/\(model):streamGenerateContent?alt=sse&key=\(apiKey)"
         guard let url = URL(string: urlString) else {
             throw NSError(domain: "GeminiClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid API URL"])
@@ -255,49 +310,135 @@ final class ExtensionGeminiClient {
                 "temperature": 0.7,
                 "topP": 0.95,
                 "topK": 40,
-                "maxOutputTokens": 4096,
+                "maxOutputTokens": 8192,
+                "thinkingConfig": thinkingConfig(for: model),
             ]
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = 120
 
-        let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
+        let maxRetries = 2
+        var lastError: Error?
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NSError(domain: "GeminiClient", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
-        }
-
-        if httpResponse.statusCode != 200 {
-            var errorBody = ""
-            for try await line in asyncBytes.lines { errorBody += line }
-            throw NSError(domain: "GeminiClient", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "API error (\(httpResponse.statusCode)): \(errorBody.prefix(200))"])
-        }
-
-        var fullResponse = ""
-
-        for try await line in asyncBytes.lines {
-            if line.hasPrefix("data: ") {
-                let jsonString = String(line.dropFirst(6))
-                if jsonString.trimmingCharacters(in: .whitespaces).isEmpty { continue }
-                if jsonString.contains("[DONE]") { break }
-
-                if let data = jsonString.data(using: .utf8),
-                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let candidates = json["candidates"] as? [[String: Any]],
-                   let content = candidates.first?["content"] as? [String: Any],
-                   let parts = content["parts"] as? [[String: Any]],
-                   let text = parts.first?["text"] as? String {
-                    fullResponse += text
-                    onToken?(fullResponse)
-                }
+        for attempt in 0...maxRetries {
+            if attempt > 0 {
+                FlowLogger.log(step: "retry", data: [
+                    "attempt": attempt,
+                    "reason": lastError?.localizedDescription ?? "unknown",
+                ])
+                try await Task.sleep(nanoseconds: UInt64(attempt) * 2_000_000_000)
             }
+
+            let asyncBytes: URLSession.AsyncBytes
+            let response: URLResponse
+            do {
+                (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
+            } catch {
+                lastError = error
+                if attempt < maxRetries { continue }
+                throw error
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NSError(domain: "GeminiClient", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+            }
+
+            if httpResponse.statusCode == 429 || httpResponse.statusCode >= 500 {
+                var errorBody = ""
+                for try await line in asyncBytes.lines { errorBody += line }
+                lastError = NSError(domain: "GeminiClient", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "API error (\(httpResponse.statusCode)): \(errorBody.prefix(200))"])
+                if attempt < maxRetries { continue }
+                throw lastError!
+            }
+
+            if httpResponse.statusCode != 200 {
+                var errorBody = ""
+                for try await line in asyncBytes.lines { errorBody += line }
+                throw NSError(domain: "GeminiClient", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "API error (\(httpResponse.statusCode)): \(errorBody.prefix(200))"])
+            }
+
+            var emailResponse = ""
+            var thinkingResponse = ""
+            var lastFinishReason: String?
+            var chunkCount = 0
+            var lastUsageMetadata: UsageMetadata?
+
+            do {
+                for try await line in asyncBytes.lines {
+                    if line.hasPrefix("data: ") {
+                        let jsonString = String(line.dropFirst(6))
+                        if jsonString.trimmingCharacters(in: .whitespaces).isEmpty { continue }
+                        if jsonString.contains("[DONE]") { break }
+
+                        guard let data = jsonString.data(using: .utf8),
+                              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+
+                        if let usage = json["usageMetadata"] as? [String: Any],
+                           let prompt = usage["promptTokenCount"] as? Int,
+                           let candidates = usage["candidatesTokenCount"] as? Int,
+                           let total = usage["totalTokenCount"] as? Int {
+                            lastUsageMetadata = UsageMetadata(
+                                promptTokenCount: prompt,
+                                candidatesTokenCount: candidates,
+                                totalTokenCount: total,
+                                thoughtsTokenCount: usage["thoughtsTokenCount"] as? Int
+                            )
+                        }
+
+                        guard let candidates = json["candidates"] as? [[String: Any]] else { continue }
+
+                        if let finishReason = candidates.first?["finishReason"] as? String {
+                            lastFinishReason = finishReason
+                        }
+
+                        guard let content = candidates.first?["content"] as? [String: Any],
+                              let parts = content["parts"] as? [[String: Any]] else { continue }
+
+                        for part in parts {
+                            guard let text = part["text"] as? String else { continue }
+                            let isThought = part["thought"] as? Bool ?? false
+                            chunkCount += 1
+
+                            if isThought {
+                                thinkingResponse += text
+                                onThinking?(thinkingResponse)
+                            } else {
+                                emailResponse += text
+                                onToken?(emailResponse)
+                            }
+                        }
+                    }
+                }
+            } catch {
+                lastError = error
+                if attempt < maxRetries { continue }
+                throw error
+            }
+
+            FlowLogger.log(step: "stream_complete", data: [
+                "chunkCount": chunkCount,
+                "finishReason": lastFinishReason ?? "none",
+                "thinking": thinkingResponse,
+                "thinking_length": thinkingResponse.count,
+                "email_length": emailResponse.count,
+                "promptTokens": lastUsageMetadata?.promptTokenCount ?? 0,
+                "candidateTokens": lastUsageMetadata?.candidatesTokenCount ?? 0,
+                "totalTokens": lastUsageMetadata?.totalTokenCount ?? 0,
+            ])
+
+            if emailResponse.isEmpty {
+                throw NSError(domain: "GeminiClient", code: -3, userInfo: [NSLocalizedDescriptionKey: "Empty response from AI"])
+            }
+
+            return GenerationResult(
+                text: Self.stripCodeFences(emailResponse),
+                usage: lastUsageMetadata,
+                thinkingText: thinkingResponse.isEmpty ? nil : thinkingResponse
+            )
         }
 
-        if fullResponse.isEmpty {
-            throw NSError(domain: "GeminiClient", code: -3, userInfo: [NSLocalizedDescriptionKey: "Empty response from AI"])
-        }
-
-        return Self.stripCodeFences(fullResponse)
+        throw lastError ?? NSError(domain: "GeminiClient", code: -4, userInfo: [NSLocalizedDescriptionKey: "Request failed after retries"])
     }
 
     /// Strip markdown code fences (```html ... ```) that Gemini often wraps around HTML output.
