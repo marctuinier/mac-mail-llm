@@ -1,11 +1,44 @@
 import Foundation
 import MailKit
 
-/// Singleton that owns the Gemini generation lifecycle.
+/// Per-session manager that owns the Gemini generation lifecycle for a single compose window.
 /// Survives toolbar popover dismissal so generation continues in the background
 /// and results are available when the user reopens the panel.
+///
+/// Each compose window gets its own instance, keyed by the session's context ID.
+/// Instances are created when the session begins and removed when it ends.
 final class GenerationManager {
-    static let shared = GenerationManager()
+
+    // MARK: - Session Registry
+
+    private static var sessions: [UUID: GenerationManager] = [:]
+
+    /// Retrieve or create a manager for the given compose session.
+    static func manager(for session: MEComposeSession) -> GenerationManager {
+        let id = session.composeContext.contextID
+        if let existing = sessions[id] {
+            return existing
+        }
+        let mgr = GenerationManager(sessionID: id)
+        mgr.composeSession = session
+        sessions[id] = mgr
+        return mgr
+    }
+
+    /// Remove the manager when a compose session ends.
+    static func removeManager(for session: MEComposeSession) {
+        let id = session.composeContext.contextID
+        sessions[id]?.generationTask?.cancel()
+        sessions.removeValue(forKey: id)
+    }
+
+    /// Convenience for backward compatibility — returns the most recently active
+    /// manager if there is exactly one, otherwise nil. Prefer `manager(for:)`.
+    static var shared: GenerationManager? {
+        sessions.values.first
+    }
+
+    // MARK: - State
 
     enum State: Equatable {
         case idle
@@ -14,19 +47,14 @@ final class GenerationManager {
         case error(message: String)
     }
 
-    // MARK: - Public State
-
+    let sessionID: UUID
     private(set) var state: State = .idle
     private(set) var streamingText: String = ""
 
-    /// The Gemini client (maintains conversation history for refine)
     let geminiClient = ExtensionGeminiClient()
-
-    /// Email context extracted from the compose session
     var emailContext: [String: Any] = [:]
-
-    /// The compose session reference (weak to avoid retain cycles with Mail.app)
     weak var composeSession: MEComposeSession?
+    var cachedOriginalRawData: Data?
 
     // MARK: - Last Request (for retry)
 
@@ -43,12 +71,10 @@ final class GenerationManager {
 
     // MARK: - Private
 
-    private var generationTask: Task<Void, Never>?
-    private let resultFileURL = AppGroupConstants.containerURL.appendingPathComponent("last-generation.json")
+    fileprivate var generationTask: Task<Void, Never>?
 
-    private init() {
-        // On init, check if there's a cached result from a previous run
-        loadCachedResult()
+    private init(sessionID: UUID) {
+        self.sessionID = sessionID
     }
 
     // MARK: - Generate
@@ -66,7 +92,6 @@ final class GenerationManager {
         generationTask?.cancel()
         state = .generating
         streamingText = ""
-        clearCachedResult()
 
         lastRequest = LastRequest(
             apiKey: apiKey, model: model, instruction: instruction,
@@ -98,7 +123,6 @@ final class GenerationManager {
                 await MainActor.run {
                     self.state = .preview(html: result.text)
                     self.streamingText = ""
-                    self.cacheResult(result.text)
                 }
                 Self.recordCall(
                     model: model, isRefine: false, status: .success,
@@ -159,7 +183,6 @@ final class GenerationManager {
                 await MainActor.run {
                     self.state = .preview(html: result.text)
                     self.streamingText = ""
-                    self.cacheResult(result.text)
                 }
                 Self.recordCall(
                     model: model, isRefine: true, status: .success,
@@ -238,36 +261,5 @@ final class GenerationManager {
         state = .idle
         streamingText = ""
         geminiClient.reset()
-        clearCachedResult()
-    }
-
-    // MARK: - Result Caching
-
-    private func cacheResult(_ html: String) {
-        let payload: [String: Any] = [
-            "html": html,
-            "timestamp": Date().timeIntervalSince1970
-        ]
-        if let data = try? JSONSerialization.data(withJSONObject: payload) {
-            try? data.write(to: resultFileURL)
-        }
-    }
-
-    private func clearCachedResult() {
-        try? FileManager.default.removeItem(at: resultFileURL)
-    }
-
-    private func loadCachedResult() {
-        guard let data = try? Data(contentsOf: resultFileURL),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let html = json["html"] as? String,
-              let ts = json["timestamp"] as? TimeInterval else { return }
-        // Only restore if less than 10 minutes old
-        let age = Date().timeIntervalSince1970 - ts
-        if age < 600 && !html.isEmpty {
-            state = .preview(html: html)
-        } else {
-            clearCachedResult()
-        }
     }
 }

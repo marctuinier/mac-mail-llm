@@ -30,3 +30,7 @@ MailMateAI/Local.xcconfig
 
 # Cursor IDE
 .cursor/
+
+# Debug session logs
+flow-log.json
+latest-session-log.json

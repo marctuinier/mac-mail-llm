@@ -5,13 +5,31 @@ import Foundation
 ///
 /// Each entry is a self-contained JSON object on its own line.
 /// The log is capped at ~200KB; older entries are trimmed when the cap is exceeded.
+///
+/// Additionally, each "generate" step starts a new per-session log file that
+/// captures all steps for that single request, written to the App Group container
+/// as `session-log-<timestamp>.json`.
 enum FlowLogger {
     private static let maxBytes = 200_000
+    private static var sessionEntries: [[String: Any]] = []
+    private static var sessionActive = false
 
     static func log(step: String, data: [String: Any]) {
         var entry = data
         entry["_step"] = step
         entry["_timestamp"] = ISO8601DateFormatter().string(from: Date())
+
+        // Per-session log: start fresh on "generate", collect until "generate_result"
+        if step == "generate" || step == "extraction" && !sessionActive {
+            sessionEntries = []
+            sessionActive = true
+        }
+        if sessionActive {
+            sessionEntries.append(entry)
+        }
+        if step == "generate_result" || step == "stream_complete" {
+            writeSessionLog()
+        }
 
         guard let json = try? JSONSerialization.data(withJSONObject: entry, options: [.sortedKeys]),
               let line = String(data: json, encoding: .utf8) else { return }
@@ -34,6 +52,29 @@ enum FlowLogger {
 
     static func clear() {
         try? FileManager.default.removeItem(at: AppGroupConstants.flowLogFileURL)
+    }
+
+    /// Write the collected session entries as a pretty-printed JSON array.
+    private static func writeSessionLog() {
+        guard !sessionEntries.isEmpty else { return }
+        sessionActive = false
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+        let filename = "session-log-\(formatter.string(from: Date())).json"
+        let url = AppGroupConstants.containerURL.appendingPathComponent(filename)
+
+        if let data = try? JSONSerialization.data(withJSONObject: sessionEntries, options: [.prettyPrinted, .sortedKeys]) {
+            try? data.write(to: url, options: .atomic)
+        }
+
+        // Also write the latest session log to a stable filename for easy access
+        let latestURL = AppGroupConstants.containerURL.appendingPathComponent("latest-session-log.json")
+        if let data = try? JSONSerialization.data(withJSONObject: sessionEntries, options: [.prettyPrinted, .sortedKeys]) {
+            try? data.write(to: latestURL, options: .atomic)
+        }
+
+        sessionEntries = []
     }
 
     private static func trimIfNeeded(url: URL) {

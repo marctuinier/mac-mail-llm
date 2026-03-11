@@ -4,6 +4,8 @@
 <dict>
 	<key>AppGroupID</key>
 	<string>$(APP_GROUP_ID)</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>MailMate AI needs to read the compose window content to generate contextual replies.</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>

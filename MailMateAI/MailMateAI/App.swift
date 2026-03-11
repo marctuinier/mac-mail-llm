@@ -44,11 +44,14 @@ final class AppState: ObservableObject {
     @Published var callHistory: [CallRecord] = []
 
     private let dataService = SharedDataService.shared
+    private var pollTimer: Timer?
 
     init() {
         loadData()
         listenForEmailContextUpdates()
         listenForCallHistoryUpdates()
+        startPolling()
+        listenForAppActivation()
     }
 
     func loadData() {
@@ -89,23 +92,50 @@ final class AppState: ObservableObject {
     /// when new email context is available.
     private func listenForEmailContextUpdates() {
         DistributedNotificationCenter.default().addObserver(
-            forName: NSNotification.Name(AppGroupConstants.emailContextUpdatedNotification),
+            self,
+            selector: #selector(handleEmailContextUpdate),
+            name: NSNotification.Name(AppGroupConstants.emailContextUpdatedNotification),
             object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.refreshEmailContext()
-        }
+            suspensionBehavior: .deliverImmediately
+        )
+    }
+
+    @objc private func handleEmailContextUpdate() {
+        refreshEmailContext()
     }
 
     /// Listen for distributed notifications from the Mail extension
     /// when a new call history record is written.
     private func listenForCallHistoryUpdates() {
         DistributedNotificationCenter.default().addObserver(
-            forName: NSNotification.Name(AppGroupConstants.callHistoryUpdatedNotification),
+            self,
+            selector: #selector(handleCallHistoryUpdate),
+            name: NSNotification.Name(AppGroupConstants.callHistoryUpdatedNotification),
+            object: nil,
+            suspensionBehavior: .deliverImmediately
+        )
+    }
+
+    @objc private func handleCallHistoryUpdate() {
+        loadCallHistory()
+    }
+
+    /// Poll the call history file every 5 seconds so the UI stays
+    /// up-to-date even when distributed notifications are deferred.
+    private func startPolling() {
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.loadCallHistory() }
+        }
+    }
+
+    /// Reload everything when the user switches back to the host app.
+    private func listenForAppActivation() {
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadCallHistory()
+            Task { @MainActor in self?.loadCallHistory() }
         }
     }
 }

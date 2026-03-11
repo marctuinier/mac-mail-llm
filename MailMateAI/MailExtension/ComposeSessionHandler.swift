@@ -9,13 +9,27 @@ class ComposeSessionHandler: NSObject, MEComposeSessionHandler {
 
     /// Called when a new compose session begins (user opens a compose window).
     func mailComposeSessionDidBegin(_ session: MEComposeSession) {
-        // Email context is now extracted later by ToolbarViewController using
-        // session.composeContext.originalMessage, which has the actual email body.
+        let mgr = GenerationManager.manager(for: session)
+
+        let origMsg = session.composeContext.originalMessage
+        if let rawData = origMsg?.rawData {
+            mgr.cachedOriginalRawData = rawData
+        }
+
+        FlowLogger.log(step: "session_begin", data: [
+            "sessionID": session.composeContext.contextID.uuidString,
+            "subject": session.mailMessage.subject,
+            "action": String(describing: session.composeContext.action),
+            "hasOriginalMessage": origMsg != nil,
+            "hasRawData": origMsg?.rawData != nil,
+            "rawDataSize": origMsg?.rawData?.count ?? 0,
+            "composeHasRawData": session.mailMessage.rawData != nil,
+        ])
     }
 
     /// Called when the compose session ends (window is closed or email is sent).
     func mailComposeSessionDidEnd(_ session: MEComposeSession) {
-        // Clean up is optional; context will be overwritten by the next session.
+        GenerationManager.removeManager(for: session)
     }
 
     // MARK: - Toolbar View Controller
@@ -29,12 +43,10 @@ class ComposeSessionHandler: NSObject, MEComposeSessionHandler {
 
     // MARK: - Compose Validation
 
-    /// Allows the extension to annotate recipient addresses (e.g., with icons).
     func annotateAddressesForSession(_ session: MEComposeSession) async -> [String: MEAddressAnnotation] {
         return [:]
     }
 
-    /// Called before the message is sent. We allow all messages through.
     func allowMessageSendForSession(_ session: MEComposeSession) async -> MEOutgoingMessageEncodingStatus {
         return MEOutgoingMessageEncodingStatus(
             canSign: false,

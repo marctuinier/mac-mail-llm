@@ -14,13 +14,18 @@ private extension NSFont {
 class ToolbarViewController: MEExtensionViewController {
 
     /// The compose session passed from ComposeSessionHandler.
-    var composeSession: MEComposeSession? {
-        didSet { GenerationManager.shared.composeSession = composeSession }
-    }
+    var composeSession: MEComposeSession?
 
     private var savedPrompts: [(name: String, instruction: String, id: String, links: [(label: String, url: String)], signature: String?)] = []
-    private var manager: GenerationManager { GenerationManager.shared }
     private var heightConstraint: NSLayoutConstraint?
+
+    /// Per-session generation manager. Each compose window gets its own.
+    private var manager: GenerationManager {
+        guard let session = composeSession else {
+            fatalError("ToolbarViewController used without a composeSession")
+        }
+        return GenerationManager.manager(for: session)
+    }
 
     // MARK: - UI Elements
 
@@ -80,10 +85,6 @@ class ToolbarViewController: MEExtensionViewController {
 
     override func viewWillAppear() {
         super.viewWillAppear()
-        // Restore compose session reference if we have one
-        if let session = composeSession {
-            manager.composeSession = session
-        }
         refreshEmailContext()
         loadData()
 
@@ -132,6 +133,7 @@ class ToolbarViewController: MEExtensionViewController {
         var bodyText = ""
         var bodyHTML: String? = nil
         var originalFrom = ""
+        var extractionSource = "none"
 
         if let origMsg = originalMsg {
             originalFrom = origMsg.fromAddress.addressString ?? ""
@@ -139,13 +141,34 @@ class ToolbarViewController: MEExtensionViewController {
                 let parsed = parseMIMEBody(from: rawData)
                 bodyText = parsed.plainText
                 bodyHTML = parsed.html
+                if !bodyText.isEmpty || bodyHTML != nil { extractionSource = "originalMessage.rawData" }
             }
         }
 
+        // Fallback 1: use raw data cached at session start (before MailKit unloads it)
+        if bodyText.isEmpty && bodyHTML == nil,
+           let cached = manager.cachedOriginalRawData {
+            let parsed = parseMIMEBody(from: cached)
+            bodyText = parsed.plainText
+            bodyHTML = parsed.html
+            if !bodyText.isEmpty || bodyHTML != nil { extractionSource = "cachedOriginalRawData" }
+        }
+
+        // Fallback 2: try the compose message's own raw data (contains quoted thread)
         if bodyText.isEmpty, let rawData = composeMsg.rawData {
             let parsed = parseMIMEBody(from: rawData)
             bodyText = parsed.plainText
             if bodyHTML == nil { bodyHTML = parsed.html }
+            if !bodyText.isEmpty { extractionSource = "composeMsg.rawData" }
+        }
+
+        // Fallback 3: AppleScript — read the compose window content directly from Mail.app.
+        // MailKit sometimes returns nil rawData even though the quoted thread is visible.
+        if bodyText.isEmpty {
+            if let scraped = scrapeComposeBodyViaAppleScript() {
+                bodyText = scraped
+                extractionSource = "applescript"
+            }
         }
 
         // If MIME parsing found HTML but no plain text, convert HTML to text
@@ -186,8 +209,12 @@ class ToolbarViewController: MEExtensionViewController {
             "bodyText_length": bodyText.count,
             "bodyText": bodyText,
             "bodyHTML_length": bodyHTML?.count ?? 0,
-            "hadPlainText": bodyText.count > 0 && bodyHTML != nil,
-            "usedHTMLFallback": bodyText.count > 0 && bodyHTML != nil && originalMsg?.rawData != nil,
+            "extractionSource": extractionSource,
+            "hasOriginalMessage": originalMsg != nil,
+            "hasOriginalRawData": originalMsg?.rawData != nil,
+            "cachedRawDataAvailable": manager.cachedOriginalRawData != nil,
+            "cachedRawDataSize": manager.cachedOriginalRawData?.count ?? 0,
+            "composeRawDataAvailable": composeMsg.rawData != nil,
         ])
 
         let model = EmailContextModel(
@@ -296,6 +323,136 @@ class ToolbarViewController: MEExtensionViewController {
             return input
         }
         return decoded
+    }
+
+    // MARK: - AppleScript Compose Body Extraction
+
+    /// Reads the content of the frontmost Mail compose window using Accessibility API.
+    /// Falls back to AppleScript if Accessibility fails.
+    /// This is a fallback for when MailKit's rawData is nil.
+    private func scrapeComposeBodyViaAppleScript() -> String? {
+        // Attempt 1: Accessibility API (reads the text area of the compose window)
+        if AXIsProcessTrusted() {
+            if let text = readComposeBodyViaAccessibility() {
+                FlowLogger.log(step: "body_scrape", data: [
+                    "method": "accessibility",
+                    "success": true,
+                    "contentLength": text.count,
+                ])
+                return text
+            }
+        }
+
+        // Attempt 2: AppleScript
+        let script = """
+        tell application "Mail"
+            try
+                set theContent to content of front outgoing message
+                return theContent
+            on error errMsg number errNum
+                return "APPLESCRIPT_ERROR:" & errMsg & " (" & errNum & ")"
+            end try
+        end tell
+        """
+
+        var error: NSDictionary?
+        let appleScript = NSAppleScript(source: script)
+        let result = appleScript?.executeAndReturnError(&error)
+        let rawResult = result?.stringValue ?? ""
+
+        if let errorInfo = error {
+            let errMsg = errorInfo[NSAppleScript.errorMessage] as? String ?? "unknown"
+            let errNum = errorInfo[NSAppleScript.errorNumber] as? Int ?? -1
+            FlowLogger.log(step: "body_scrape", data: [
+                "method": "applescript",
+                "success": false,
+                "errorMessage": errMsg,
+                "errorNumber": errNum,
+                "axTrusted": AXIsProcessTrusted(),
+            ])
+            return nil
+        }
+
+        if rawResult.hasPrefix("APPLESCRIPT_ERROR:") {
+            FlowLogger.log(step: "body_scrape", data: [
+                "method": "applescript",
+                "success": false,
+                "scriptError": rawResult,
+            ])
+            return nil
+        }
+
+        let trimmed = rawResult.trimmingCharacters(in: .whitespacesAndNewlines)
+        FlowLogger.log(step: "body_scrape", data: [
+            "method": "applescript",
+            "success": !trimmed.isEmpty,
+            "contentLength": trimmed.count,
+        ])
+
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    /// Use the Accessibility API to read the compose body from Mail's focused window.
+    /// Targets the Mail.app process directly using its PID.
+    private func readComposeBodyViaAccessibility() -> String? {
+        guard let mailApp = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.mail").first else {
+            FlowLogger.log(step: "ax_attempt", data: ["error": "Mail.app not found"])
+            return nil
+        }
+
+        let appElement = AXUIElementCreateApplication(mailApp.processIdentifier)
+
+        // Get the focused window
+        var windowValue: CFTypeRef?
+        let windowResult = AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &windowValue)
+        guard windowResult == .success else {
+            FlowLogger.log(step: "ax_attempt", data: [
+                "error": "Cannot get focused window",
+                "axResult": windowResult.rawValue,
+                "axTrusted": AXIsProcessTrusted(),
+                "mailPID": mailApp.processIdentifier,
+            ])
+            return nil
+        }
+
+        let window = windowValue as! AXUIElement
+
+        // Search for a text area with substantial content (the compose body)
+        if let text = findAXTextContent(in: window) {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty { return trimmed }
+        }
+
+        FlowLogger.log(step: "ax_attempt", data: ["error": "No text content found in window tree"])
+        return nil
+    }
+
+    /// Recursively search an AX element tree for a text area and return its value.
+    private func findAXTextContent(in element: AXUIElement, depth: Int = 0) -> String? {
+        guard depth < 20 else { return nil }
+
+        var roleValue: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleValue)
+        let role = roleValue as? String ?? ""
+
+        if role == "AXTextArea" || role == "AXWebArea" {
+            var valueRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef) == .success,
+               let text = valueRef as? String, text.trimmingCharacters(in: .whitespacesAndNewlines).count > 10 {
+                return text
+            }
+        }
+
+        var childrenValue: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &childrenValue) == .success,
+              let children = childrenValue as? [AXUIElement] else { return nil }
+
+        for child in children {
+            if let text = findAXTextContent(in: child, depth: depth + 1) {
+                return text
+            }
+        }
+        return nil
     }
 
     // MARK: - Data Loading

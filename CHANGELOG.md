@@ -13,6 +13,25 @@ No unreleased changes.
 
 ## Released
 
+### [1.3.1](https://github.com/marctuinier/mac-mail-llm/compare/v1.3.0...v1.3.1) - 2026-03-07
+
+#### Added
+
+- **Multi-window compose support**: Each compose window now gets its own independent generation session. You can open 3 reply windows, generate AI drafts in each, and they won't interfere with each other.
+- **Email body extraction fallbacks**: When MailKit's `rawData` is unavailable (common with certain IMAP/Exchange messages), the extension now attempts Accessibility API and AppleScript scraping as fallbacks.
+- **Per-session debug logs**: Each generation request now writes a standalone `session-log-<timestamp>.json` file for easier debugging, alongside the rolling `flow-log.json`.
+
+#### Changed
+
+- `GenerationManager` refactored from a singleton to per-session instances keyed by `MEComposeSession` context ID. Sessions are created on compose window open and cleaned up on close.
+- Call History in the host app now updates in real time via `DistributedNotificationCenter` with `suspensionBehavior: .deliverImmediately`, plus a 5-second polling fallback.
+- Extraction diagnostics now log the exact source used (`originalMessage.rawData`, `cachedOriginalRawData`, `composeMsg.rawData`, `applescript`, or `none`).
+
+#### Fixed
+
+- Fixed Call History not updating until the host app was clicked — notifications are now delivered even when the app is in the background.
+- Fixed stale email context from a previous compose window being used when `rawData` was unavailable — cached data is now cleared at the start of each new session.
+
 ### [1.3.0](https://github.com/marctuinier/mac-mail-llm/compare/v1.2.1...v1.3.0) - 2026-03-06
 
 #### Added
