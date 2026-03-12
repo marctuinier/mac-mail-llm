@@ -598,12 +598,24 @@ class ToolbarViewController: MEExtensionViewController {
         clearContent()
         hasTransitionedToEmail = false
 
-        // Phase label at top
+        let headerRow = NSStackView()
+        headerRow.orientation = .horizontal; headerRow.spacing = 6
+        headerRow.translatesAutoresizingMaskIntoConstraints = false
+
         let phaseLabel = makeLabel("💭 Thinking...", size: 11, weight: .medium, color: .secondaryLabelColor)
         phaseLabel.identifier = NSUserInterfaceItemIdentifier("phaseLabel")
-        contentStack.addArrangedSubview(phaseLabel)
 
-        // Single full-panel text view used for both thinking and email
+        let cancelBtn = NSButton(title: "Cancel", target: self, action: #selector(cancelGeneration))
+        cancelBtn.bezelStyle = .rounded; cancelBtn.controlSize = .small
+        cancelBtn.font = .systemFont(ofSize: 10)
+        cancelBtn.contentTintColor = .secondaryLabelColor
+
+        headerRow.addArrangedSubview(phaseLabel)
+        headerRow.addArrangedSubview(NSView())
+        headerRow.addArrangedSubview(cancelBtn)
+        contentStack.addArrangedSubview(headerRow)
+        headerRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -8).isActive = true
+
         let streamText = NSTextView()
         streamText.isEditable = false; streamText.isSelectable = true
         streamText.drawsBackground = false
@@ -842,14 +854,14 @@ class ToolbarViewController: MEExtensionViewController {
     @objc private func promptFieldSubmitted(_ sender: NSTextField) {
         let text = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        generateWithInstruction(text, links: [], signature: nil)
+        generateWithInstruction(text, links: [], signature: nil, useBackgroundPrompts: true)
     }
 
     @objc private func generateFromField() {
         guard let field = findView(withId: "promptField") as? NSTextField else { return }
         let text = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        generateWithInstruction(text, links: [], signature: nil)
+        generateWithInstruction(text, links: [], signature: nil, useBackgroundPrompts: true)
     }
 
     @objc private func promptRowClicked(_ gesture: NSClickGestureRecognizer) {
@@ -943,6 +955,11 @@ class ToolbarViewController: MEExtensionViewController {
         }
     }
 
+    @objc private func cancelGeneration() {
+        manager.reset()
+        renderIdleState()
+    }
+
     @objc private func startOver() {
         manager.reset()
         refreshEmailContext()
@@ -955,7 +972,7 @@ class ToolbarViewController: MEExtensionViewController {
 
     // MARK: - Generation
 
-    private func generateWithInstruction(_ instruction: String, links: [(label: String, url: String)], signature: String?) {
+    private func generateWithInstruction(_ instruction: String, links: [(label: String, url: String)], signature: String?, useBackgroundPrompts: Bool = false) {
         guard let apiKey = retrieveAPIKey(), !apiKey.isEmpty else {
             showError("No API key. Add your Gemini API key in the MailMate AI app.")
             return
@@ -977,12 +994,18 @@ class ToolbarViewController: MEExtensionViewController {
             }
         }
 
+        var bgPrompts: [(name: String, instruction: String)] = []
+        if useBackgroundPrompts {
+            bgPrompts = savedPrompts.map { (name: $0.name, instruction: $0.instruction) }
+        }
+
         renderGeneratingState()
 
         manager.generate(
             apiKey: apiKey, model: model,
             instruction: instruction, links: links,
             signature: sig, toneSamples: toneSamples,
+            backgroundPrompts: bgPrompts,
             onThinkingUpdate: { [weak self] thinking in
                 DispatchQueue.main.async { self?.updateThinkingPreview(thinking) }
             }
@@ -990,7 +1013,6 @@ class ToolbarViewController: MEExtensionViewController {
             DispatchQueue.main.async { self?.updateLivePreview(partial) }
         }
 
-        // Poll for completion so we can transition to preview state
         pollForCompletion()
     }
 
@@ -1113,6 +1135,7 @@ class ToolbarViewController: MEExtensionViewController {
                 apiKey: req.apiKey, model: req.model,
                 instruction: req.instruction, links: req.links,
                 signature: req.signature, toneSamples: req.toneSamples,
+                backgroundPrompts: req.backgroundPrompts,
                 onThinkingUpdate: { [weak self] thinking in
                     DispatchQueue.main.async { self?.updateThinkingPreview(thinking) }
                 }

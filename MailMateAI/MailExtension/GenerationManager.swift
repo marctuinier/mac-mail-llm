@@ -65,6 +65,7 @@ final class GenerationManager {
         let links: [(label: String, url: String)]
         let signature: String
         let toneSamples: [(label: String, text: String)]
+        let backgroundPrompts: [(name: String, instruction: String)]
         let isRefine: Bool
     }
     private(set) var lastRequest: LastRequest?
@@ -86,6 +87,7 @@ final class GenerationManager {
         links: [(label: String, url: String)],
         signature: String,
         toneSamples: [(label: String, text: String)],
+        backgroundPrompts: [(name: String, instruction: String)] = [],
         onThinkingUpdate: @escaping (String) -> Void,
         onStreamUpdate: @escaping (String) -> Void
     ) {
@@ -95,7 +97,8 @@ final class GenerationManager {
 
         lastRequest = LastRequest(
             apiKey: apiKey, model: model, instruction: instruction,
-            links: links, signature: signature, toneSamples: toneSamples, isRefine: false
+            links: links, signature: signature, toneSamples: toneSamples,
+            backgroundPrompts: backgroundPrompts, isRefine: false
         )
 
         geminiClient.onThinking = { thinking in
@@ -117,7 +120,8 @@ final class GenerationManager {
                     emailContext: self.emailContext,
                     promptName: "", instruction: instruction,
                     links: links, signature: signature,
-                    toneSamples: toneSamples
+                    toneSamples: toneSamples,
+                    backgroundPrompts: backgroundPrompts
                 )
                 let duration = Date().timeIntervalSince(startTime)
                 await MainActor.run {
@@ -159,7 +163,8 @@ final class GenerationManager {
 
         lastRequest = LastRequest(
             apiKey: apiKey, model: model, instruction: instruction,
-            links: [], signature: "", toneSamples: [], isRefine: true
+            links: [], signature: "", toneSamples: [],
+            backgroundPrompts: [], isRefine: true
         )
 
         geminiClient.onThinking = { thinking in

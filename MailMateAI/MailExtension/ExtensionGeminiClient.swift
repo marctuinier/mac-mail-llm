@@ -33,7 +33,8 @@ final class ExtensionGeminiClient {
         instruction: String,
         links: [(label: String, url: String)],
         signature: String,
-        toneSamples: [(label: String, text: String)]
+        toneSamples: [(label: String, text: String)],
+        backgroundPrompts: [(name: String, instruction: String)] = []
     ) async throws -> GenerationResult {
         conversationHistory = []
 
@@ -41,7 +42,8 @@ final class ExtensionGeminiClient {
 
         let systemPrompt = buildSystemPrompt(
             instruction: instruction, links: links,
-            signature: signature, toneSamples: toneSamples
+            signature: signature, toneSamples: toneSamples,
+            backgroundPrompts: backgroundPrompts
         )
         lastSystemPrompt = systemPrompt
 
@@ -158,7 +160,8 @@ final class ExtensionGeminiClient {
         instruction: String,
         links: [(label: String, url: String)],
         signature: String,
-        toneSamples: [(label: String, text: String)]
+        toneSamples: [(label: String, text: String)],
+        backgroundPrompts: [(name: String, instruction: String)] = []
     ) -> String {
         var parts: [String] = []
 
@@ -202,6 +205,23 @@ final class ExtensionGeminiClient {
             - Use <a href="URL">text</a> for any hyperlinks.
             - Do NOT include the subject line or email headers.
             """)
+
+            if !backgroundPrompts.isEmpty {
+                parts.append("""
+
+                REFERENCE KNOWLEDGE — The user has saved prompt profiles that contain identity, tone, \
+                facts, links, and reply templates. Use relevant information from these profiles to enrich \
+                your reply when it's contextually appropriate. Do not mention these profiles directly; \
+                just weave in the relevant details naturally.
+                """)
+                for (i, bg) in backgroundPrompts.enumerated() {
+                    parts.append("""
+                    --- Profile \(i + 1): \(bg.name) ---
+                    \(bg.instruction)
+                    --- End Profile \(i + 1) ---
+                    """)
+                }
+            }
         }
 
         if !links.isEmpty {

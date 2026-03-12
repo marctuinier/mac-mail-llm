@@ -13,6 +13,13 @@ No unreleased changes.
 
 ## Released
 
+### [1.3.2](https://github.com/marctuinier/mac-mail-llm/compare/v1.3.1...v1.3.2) - 2026-03-12
+
+#### Added
+
+- **Cancel button during generation**: A Cancel button now appears alongside the thinking/writing phase label. Clicking it immediately stops the in-flight API request and returns to the home screen — no errors, no stale state.
+- **Context-aware free-text drafting**: When you type a freeform instruction in the "What would you like to draft?" field, the AI now automatically receives all your saved prompts as background reference knowledge. This means it can pull in tone, links, product details, and templates from your saved prompts without you having to explicitly select one.
+
 ### [1.3.1](https://github.com/marctuinier/mac-mail-llm/compare/v1.3.0...v1.3.1) - 2026-03-07
 
 #### Added
