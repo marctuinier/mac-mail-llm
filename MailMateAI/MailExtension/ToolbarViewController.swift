@@ -489,6 +489,7 @@ class ToolbarViewController: MEExtensionViewController {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "com.mailmate.ai",
             kSecAttrAccount as String: AppGroupConstants.apiKeyKeychainAccount,
+            kSecAttrAccessGroup as String: AppGroupConstants.keychainAccessGroup,
             kSecReturnData as String: kCFBooleanTrue!,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]

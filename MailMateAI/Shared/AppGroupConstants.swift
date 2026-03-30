@@ -69,6 +69,21 @@ enum AppGroupConstants {
     /// Key for the Keychain item storing the API key.
     static let apiKeyKeychainAccount = "com.mailmate.ai.gemini-api-key"
 
+    /// Keychain access group shared between host app and extension.
+    /// Uses the App Identifier Prefix (Team ID) from the embedded provisioning profile.
+    static let keychainAccessGroup: String = {
+        if let prefixes = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String, !prefixes.isEmpty {
+            return "\(prefixes)com.mailmate.ai"
+        }
+        // Fallback: read team ID from the app group ID (format: TEAMID.group.com.mailmate.ai)
+        let groupID = appGroupID
+        if let dotIndex = groupID.firstIndex(of: ".") {
+            let teamID = String(groupID[..<dotIndex])
+            return "\(teamID).com.mailmate.ai"
+        }
+        return "com.mailmate.ai"
+    }()
+
     // MARK: - Notification Names
 
     /// Posted by the host app when a generated reply is ready on the pasteboard.

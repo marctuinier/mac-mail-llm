@@ -47,6 +47,7 @@ final class AppState: ObservableObject {
     private var pollTimer: Timer?
 
     init() {
+        KeychainService.shared.migrateToSharedAccessGroupIfNeeded()
         loadData()
         listenForEmailContextUpdates()
         listenForCallHistoryUpdates()

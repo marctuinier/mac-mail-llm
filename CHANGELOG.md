@@ -13,6 +13,15 @@ No unreleased changes.
 
 ## Released
 
+### [1.3.3](https://github.com/marctuinier/mac-mail-llm/compare/v1.3.2...v1.3.3) - 2026-03-30
+
+#### Fixed
+
+- **Extension now works without the host app running**: The Mail extension no longer requires the MailMate AI app to be open. The API key is now stored in a shared Keychain access group accessible by both the host app and the extension independently.
+- Added `keychain-access-groups` entitlement to the host app (the extension already had it).
+- One-time migration automatically moves any existing API key to the shared Keychain access group on first launch.
+- Bumped `CFBundleVersion` (build number) to fix extension registration not updating between releases.
+
 ### [1.3.2](https://github.com/marctuinier/mac-mail-llm/compare/v1.3.1...v1.3.2) - 2026-03-12
 
 #### Added
